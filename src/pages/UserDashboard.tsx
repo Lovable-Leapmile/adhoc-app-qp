@@ -203,7 +203,7 @@ export default function UserDashboard() {
             </p>
           </Card>
           <Card className="p-4 text-center">
-            <p className="text-sm text-muted-foreground mb-1">Pickup Code</p>
+            <p className="text-sm text-muted-foreground mb-1">New Passcode</p>
             <p className="text-lg font-semibold text-foreground">
               {user?.user_pickupcode || 'N/A'}
             </p>
