@@ -17,9 +17,9 @@ export default function Reservation() {
   const podValue = getPodValue();
   const currentLocationId = localStorage.getItem('current_location_id');
 
-  // State for the user whose reservation we're creating (could be admin or customer)
+  // State for the user whose reservation we're creating (could be admin or user)
   const [reservationUser, setReservationUser] = useState(loggedInUser);
-  const [isLoadingCustomer, setIsLoadingCustomer] = useState(false);
+  const [isLoadingUser, setIsLoadingUser] = useState(false);
   const [locationName, setLocationName] = useState('Unknown Location');
   const [formData, setFormData] = useState({
     awbNumber: '',
@@ -32,10 +32,10 @@ export default function Reservation() {
       return;
     }
 
-    // Check if we're creating a reservation for a specific customer
+    // Check if we're creating a reservation for a specific user
     const userId = searchParams.get('user_id');
     if (userId) {
-      loadCustomerData(userId);
+      loadUserData(userId);
     }
 
     // Load location info if we have location_id
@@ -43,22 +43,22 @@ export default function Reservation() {
       loadLocationInfo();
     }
   }, [navigate, searchParams, currentLocationId]);
-  const loadCustomerData = async (userId: string) => {
-    setIsLoadingCustomer(true);
+  const loadUserData = async (userId: string) => {
+    setIsLoadingUser(true);
     try {
-      const customerData = await apiService.getUserById(userId);
-      if (customerData) {
-        setReservationUser(customerData);
+      const userData = await apiService.getUserById(userId);
+      if (userData) {
+        setReservationUser(userData);
       }
     } catch (error) {
-      console.error('Error loading customer data:', error);
+      console.error('Error loading user data:', error);
       toast({
         title: "Error",
-        description: "Failed to load customer data.",
+        description: "Failed to load user data.",
         variant: "destructive"
       });
     } finally {
-      setIsLoadingCustomer(false);
+      setIsLoadingUser(false);
     }
   };
 
@@ -136,13 +136,13 @@ export default function Reservation() {
               <div>
                 <p className="text-sm font-medium">User Name</p>
                 <p className="text-base">
-                  {isLoadingCustomer ? 'Loading...' : reservationUser?.user_name || 'N/A'}
+                  {isLoadingUser ? 'Loading...' : reservationUser?.user_name || 'N/A'}
                 </p>
               </div>
               <div>
                 <p className="text-sm font-medium">Phone Number</p>
                 <p className="text-base">
-                  {isLoadingCustomer ? 'Loading...' : reservationUser?.user_phone || 'N/A'}
+                  {isLoadingUser ? 'Loading...' : reservationUser?.user_phone || 'N/A'}
                 </p>
               </div>
               

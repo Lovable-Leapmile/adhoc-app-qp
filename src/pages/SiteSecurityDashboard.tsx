@@ -263,7 +263,7 @@ export default function SiteSecurityDashboard() {
   };
 
   const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user =>
-    user.user_type === "Customer" && (
+    user.user_type === "User" && (
       user.user_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.user_phone.includes(searchQuery) ||
       user.user_email.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -314,7 +314,7 @@ export const apiService = {
       },
       body: JSON.stringify({
         ...userData,
-        user_type: 'Customer'
+        user_type: 'User'
       }),
     });
 

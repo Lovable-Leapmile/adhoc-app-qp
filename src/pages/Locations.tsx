@@ -44,7 +44,7 @@ export default function Locations() {
   const handleLocationSelect = (location: UserLocation) => {
     saveLastLocation(location.location_name);
     saveLocationId(location.location_id.toString());
-    navigate('/customer-dashboard');
+    navigate('/user-dashboard');
   };
 
   const user = getUserData();

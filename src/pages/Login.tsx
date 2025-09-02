@@ -35,7 +35,7 @@ export default function Login() {
           navigate('/site-admin-dashboard');
           break;
         case 'Customer':
-          navigate('/customer-dashboard');
+          navigate('/user-dashboard');
           break;
         case 'SiteSecurity':
           navigate('/site-security-dashboard');
@@ -138,7 +138,7 @@ export default function Login() {
         navigate('/site-admin-dashboard');
         break;
       case 'Customer':
-        navigate('/customer-dashboard');
+        navigate('/user-dashboard');
         break;
       case 'SiteSecurity':
         navigate('/site-security-dashboard');

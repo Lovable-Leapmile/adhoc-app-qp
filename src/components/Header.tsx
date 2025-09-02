@@ -1,11 +1,15 @@
 import { useMemo, useState } from "react";
-import { User, MapPin, HelpCircle, LogOut, Menu, Package } from "lucide-react";
+import { User, MapPin, HelpCircle, LogOut, Menu, Package, CreditCard, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { clearUserData, clearPodValue } from "@/utils/storage";
 import { getUserData } from "@/utils/storage";
+import { useToast } from "@/hooks/use-toast";
 interface HeaderProps {
   title: string; // kept for compatibility; not displayed per new design
   showSettings?: boolean;
@@ -16,11 +20,14 @@ export function Header({
 }: HeaderProps) {
   const navigate = useNavigate();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [showPasscodeDialog, setShowPasscodeDialog] = useState(false);
+  const [passcodeData, setPasscodeData] = useState({ newPasscode: '', confirmPasscode: '' });
+  const { toast } = useToast();
   const user = getUserData();
   const roleText = useMemo(() => {
     const userType = user?.user_type;
     if (!userType) return "";
-    if (userType === 'Customer') return 'Customer';
+    if (userType === 'Customer') return 'User';
     if (userType === 'SiteSecurity') return 'Site Security';
     if (userType === 'SiteAdmin') return 'Site Admin';
     return userType;
@@ -55,7 +62,7 @@ export function Header({
                   <div className="flex-1 overflow-auto">
                     <div className="py-2">
                       <SheetClose asChild>
-                        <Button variant="ghost" className="w-full justify-start h-12 px-4 rounded-none" onClick={() => navigate('/customer-dashboard')}>
+                        <Button variant="ghost" className="w-full justify-start h-12 px-4 rounded-none" onClick={() => navigate('/user-dashboard')}>
                           <User className="mr-3 h-4 w-4" />
                           Home
                         </Button>
@@ -77,6 +84,22 @@ export function Header({
                           <Button variant="ghost" className="w-full justify-start h-12 px-4 rounded-none" onClick={() => navigate('/rto')}>
                             <Package className="mr-3 h-4 w-4" />
                             RTO Management
+                          </Button>
+                        </SheetClose>
+                      )}
+                      {(user?.user_type === 'Customer' || user?.user_type === 'User') && (
+                        <SheetClose asChild>
+                          <Button variant="ghost" className="w-full justify-start h-12 px-4 rounded-none" onClick={() => navigate('/credits')}>
+                            <CreditCard className="mr-3 h-4 w-4" />
+                            Post Pay Credits
+                          </Button>
+                        </SheetClose>
+                      )}
+                      {(user?.user_type === 'Customer' || user?.user_type === 'User') && (
+                        <SheetClose asChild>
+                          <Button variant="ghost" className="w-full justify-start h-12 px-4 rounded-none" onClick={() => setShowPasscodeDialog(true)}>
+                            <Lock className="mr-3 h-4 w-4" />
+                            Change Passcode
                           </Button>
                         </SheetClose>
                       )}
@@ -116,5 +139,65 @@ export function Header({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Change Passcode Dialog */}
+      <Dialog open={showPasscodeDialog} onOpenChange={setShowPasscodeDialog}>
+        <DialogContent className="max-w-sm mx-auto">
+          <DialogHeader>
+            <DialogTitle>Change Passcode</DialogTitle>
+            <DialogDescription>
+              Enter your new passcode and confirm it below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="newPasscode">Enter New Passcode</Label>
+              <Input
+                id="newPasscode"
+                type="password"
+                value={passcodeData.newPasscode}
+                onChange={(e) => setPasscodeData(prev => ({ ...prev, newPasscode: e.target.value }))}
+                placeholder="New passcode"
+              />
+            </div>
+            <div>
+              <Label htmlFor="confirmPasscode">Re-enter Passcode</Label>
+              <Input
+                id="confirmPasscode"
+                type="password"
+                value={passcodeData.confirmPasscode}
+                onChange={(e) => setPasscodeData(prev => ({ ...prev, confirmPasscode: e.target.value }))}
+                placeholder="Confirm passcode"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex space-x-2">
+            <Button variant="outline" onClick={() => setShowPasscodeDialog(false)} className="flex-1">
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                if (passcodeData.newPasscode !== passcodeData.confirmPasscode) {
+                  toast({
+                    title: "Error",
+                    description: "Passcodes do not match",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                toast({
+                  title: "Success",
+                  description: "Passcode changed successfully",
+                });
+                setShowPasscodeDialog(false);
+                setPasscodeData({ newPasscode: '', confirmPasscode: '' });
+              }} 
+              className="flex-1 btn-primary"
+            >
+              Submit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>;
 }

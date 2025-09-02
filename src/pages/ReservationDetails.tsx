@@ -46,7 +46,7 @@ export default function ReservationDetails() {
         description: "Reservation ID not found.",
         variant: "destructive"
       });
-      navigate('/customer-dashboard');
+      navigate('/user-dashboard');
       return;
     }
     loadReservationDetails();
@@ -64,7 +64,7 @@ export default function ReservationDetails() {
         description: "Failed to load reservation details.",
         variant: "destructive"
       });
-      navigate('/customer-dashboard');
+      navigate('/user-dashboard');
     } finally {
       setLoading(false);
     }
@@ -123,7 +123,7 @@ export default function ReservationDetails() {
       });
       // Refresh reservation details or navigate back
       setTimeout(() => {
-        navigate('/customer-dashboard');
+        navigate('/user-dashboard');
       }, 1500);
     } catch (error: any) {
       console.error('Error cancelling reservation:', error);
@@ -156,7 +156,7 @@ export default function ReservationDetails() {
         <div className="mobile-container">
           <div className="text-center py-20">
             <p className="text-muted-foreground">Reservation details not found.</p>
-            <Button onClick={() => navigate('/customer-dashboard')} className="mt-4">
+            <Button onClick={() => navigate('/user-dashboard')} className="mt-4">
               Back to Dashboard
             </Button>
           </div>
@@ -177,7 +177,7 @@ export default function ReservationDetails() {
                   
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/customer-dashboard')} className="h-8 w-8 p-0 text-qikpod-black hover:bg-black/10">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/user-dashboard')} className="h-8 w-8 p-0 text-qikpod-black hover:bg-black/10">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </div>
@@ -301,7 +301,7 @@ export default function ReservationDetails() {
             <span>Cancel Reservation</span>
           </Button>
 
-          <Button onClick={() => navigate('/customer-dashboard')} className="btn-qikpod w-full h-12">
+          <Button onClick={() => navigate('/user-dashboard')} className="btn-qikpod w-full h-12">
             Back to Dashboard
           </Button>
         </div>

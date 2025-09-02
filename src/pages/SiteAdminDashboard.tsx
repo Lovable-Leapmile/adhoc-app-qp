@@ -262,7 +262,7 @@ export default function SiteAdminDashboard() {
   const handleReservationCardClick = (reservation: Reservation) => {
     navigate(`/reservation-details/${reservation.id}`);
   };
-  const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user => user.user_type === "Customer" && (user.user_name.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_phone.includes(searchQuery) || user.user_email.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_flatno.toLowerCase().includes(searchQuery.toLowerCase()))) : [];
+  const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user => user.user_type === "User" && (user.user_name.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_phone.includes(searchQuery) || user.user_email.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_flatno.toLowerCase().includes(searchQuery.toLowerCase()))) : [];
   const filteredReservations = Array.isArray(reservations) ? reservations.filter(reservation => reservation.user_name.toLowerCase().includes(searchQuery.toLowerCase()) || reservation.user_phone.includes(searchQuery) || reservation.awb_number.toLowerCase().includes(searchQuery.toLowerCase())) : [];
 
   // Pagination calculations for users

@@ -8,7 +8,7 @@ import { PageLayout } from "@/components/PageLayout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Registration from "./pages/Registration";
-import CustomerDashboard from "./pages/CustomerDashboard";
+import UserDashboard from "./pages/UserDashboard";
 import SiteAdminDashboard from "./pages/SiteAdminDashboard";
 import SiteSecurityDashboard from "./pages/SiteSecurityDashboard";
 import RTO from "./pages/RTO";
@@ -18,6 +18,7 @@ import Support from "./pages/Support";
 import Reservation from "./pages/Reservation";
 import ReservationDetails from "./pages/ReservationDetails";
 import HowItWorks from "./pages/HowItWorks";
+import Credits from "./pages/Credits";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,7 +33,9 @@ const App = () => (
           <Route path="/" element={<PageLayout pageTitle="Login" showBack={false} showSettings={false}><Index /></PageLayout>} />
           <Route path="/login" element={<PageLayout pageTitle="Login" showBack={false} showSettings={false}><Login /></PageLayout>} />
           <Route path="/registration" element={<PageLayout pageTitle="Registration" showBack={true} showSettings={false}><Registration /></PageLayout>} />
-          <Route path="/customer-dashboard" element={<PageLayout pageTitle="Customer Dashboard" showBack={false}><CustomerDashboard /></PageLayout>} />
+          <Route path="/user-dashboard" element={<PageLayout pageTitle="User Dashboard" showBack={false}><UserDashboard /></PageLayout>} />
+          {/* Keep legacy route for backward compatibility */}
+          <Route path="/customer-dashboard" element={<PageLayout pageTitle="User Dashboard" showBack={false}><UserDashboard /></PageLayout>} />
           <Route path="/site-admin-dashboard" element={<PageLayout pageTitle="Site Admin" showBack={true}><SiteAdminDashboard /></PageLayout>} />
           <Route path="/site-security-dashboard" element={<PageLayout pageTitle="Site Security" showBack={true}><SiteSecurityDashboard /></PageLayout>} />
           <Route path="/rto" element={<PageLayout pageTitle="RTO" showBack={true}><RTO /></PageLayout>} />
@@ -42,6 +45,7 @@ const App = () => (
           <Route path="/reservation" element={<PageLayout pageTitle="Create Reservation" showBack={true}><Reservation /></PageLayout>} />
           <Route path="/reservation-details/:reservationId" element={<PageLayout pageTitle="Reservation Details" showBack={true}><ReservationDetails /></PageLayout>} />
           <Route path="/how-it-works" element={<PageLayout pageTitle="How it Works" showBack={true} showSettings={false}><HowItWorks /></PageLayout>} />
+          <Route path="/credits" element={<PageLayout pageTitle="Credits" showBack={true}><Credits /></PageLayout>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<PageLayout pageTitle="Not Found" showBack={true}><NotFound /></PageLayout>} />
         </Routes>
