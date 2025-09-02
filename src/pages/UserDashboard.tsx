@@ -9,7 +9,6 @@ import { getUserData, isLoggedIn, getPodName, getLocationId, saveLastLocation, s
 import { useToast } from "@/hooks/use-toast";
 import { LocationDetectionPopup } from "@/components/LocationDetectionPopup";
 import { useLocationDetection } from "@/hooks/useLocationDetection";
-
 export interface HistoryReservation {
   id: string;
   reservation_status: string;
@@ -23,10 +22,11 @@ export interface HistoryReservation {
   reservation_awbno?: string;
   location_name?: string;
 }
-
 export default function UserDashboard() {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const user = getUserData();
   const [locations, setLocations] = useState<UserLocation[]>([]);
   const [historyReservations, setHistoryReservations] = useState<HistoryReservation[]>([]);
@@ -36,8 +36,10 @@ export default function UserDashboard() {
 
   // Location detection
   const currentLocationId = localStorage.getItem('current_location_id');
-  const { showLocationPopup, closeLocationPopup } = useLocationDetection(user?.id, currentLocationId);
-
+  const {
+    showLocationPopup,
+    closeLocationPopup
+  } = useLocationDetection(user?.id, currentLocationId);
   useEffect(() => {
     if (!isLoggedIn()) {
       navigate('/login');
@@ -49,7 +51,6 @@ export default function UserDashboard() {
     }
     initializeData();
   }, [navigate]);
-
   const initializeData = async () => {
     const podName = getPodName();
     if (podName) {
@@ -65,7 +66,6 @@ export default function UserDashboard() {
     }
     loadUserLocations();
   };
-
   const loadUserLocations = async () => {
     if (!user) return;
     try {
@@ -83,7 +83,6 @@ export default function UserDashboard() {
       setLoadingLocations(false);
     }
   };
-
   const loadHistoryReservations = async () => {
     if (!user) return;
     setLoading(true);
@@ -94,22 +93,18 @@ export default function UserDashboard() {
         setHistoryReservations([]);
         return;
       }
-
       const authToken = localStorage.getItem('auth_token');
       const authorization = authToken ? `Bearer ${authToken}` : 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhY2wiOiJhZG1pbiIsImV4cCI6MTkxMTYyMDE1OX0.RMEW55tHQ95GVap8ChrGdPRbuVxef4Shf0NRddNgGJo';
-
       const response = await fetch(`https://stagingv3.leapmile.com/podcore/adhoc/reservations/?location_id=${locationId}&user_phone=${user.user_phone}`, {
         method: 'GET',
         headers: {
           'accept': 'application/json',
-          'Authorization': authorization,
-        },
+          'Authorization': authorization
+        }
       });
-
       if (!response.ok) {
         throw new Error('Failed to fetch history reservations');
       }
-
       const data = await response.json();
       const reservations = data.records || [];
       setHistoryReservations(reservations.map((record: any) => ({
@@ -123,7 +118,7 @@ export default function UserDashboard() {
         pickup_code: record.pickup_code,
         created_by_name: record.created_by_name,
         reservation_awbno: record.reservation_awbno,
-        location_name: record.location_name,
+        location_name: record.location_name
       })));
     } catch (error) {
       console.error('Error loading history reservations:', error);
@@ -136,7 +131,6 @@ export default function UserDashboard() {
       setLoading(false);
     }
   };
-
   const handleCreateReservation = async () => {
     const locationId = getLocationId();
     if (!locationId) {
@@ -170,23 +164,20 @@ export default function UserDashboard() {
       setLoading(false);
     }
   };
-
   const handleLocationSelect = (location: UserLocation) => {
     saveLastLocation(location.location_name);
     saveLocationId(location.location_id.toString());
     toast({
       title: "Location Selected",
-      description: `${location.location_name} selected successfully`,
+      description: `${location.location_name} selected successfully`
     });
   };
-
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     if (value === 'history') {
       loadHistoryReservations();
     }
   };
-
   const formatDate = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleDateString('en-IN', {
@@ -198,19 +189,9 @@ export default function UserDashboard() {
       return dateString;
     }
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background my-[16px]">
       {/* Create Reservation Button */}
-      <div className="py-4 max-w-md mx-auto px-[14px]">
-        <Button 
-          onClick={handleCreateReservation} 
-          className="btn-primary w-full h-12 text-base font-semibold"
-          disabled={loading}
-        >
-          {loading ? 'Checking...' : 'Create Reservation'}
-        </Button>
-      </div>
+      
 
       {/* User Information Cards */}
       <div className="max-w-md mx-auto px-[14px] mb-6">
@@ -253,10 +234,8 @@ export default function UserDashboard() {
           </TabsList>
           
           <TabsContent value="locations" className="space-y-4 mt-6">
-            {loadingLocations ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map(i => (
-                  <Card key={i} className="p-4 animate-pulse">
+            {loadingLocations ? <div className="space-y-3">
+                {[1, 2, 3].map(i => <Card key={i} className="p-4 animate-pulse">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-muted rounded-full"></div>
                       <div className="flex-1 space-y-2">
@@ -264,23 +243,13 @@ export default function UserDashboard() {
                         <div className="h-3 bg-muted rounded w-1/2"></div>
                       </div>
                     </div>
-                  </Card>
-                ))}
-              </div>
-            ) : locations.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
+                  </Card>)}
+              </div> : locations.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                 <MapPin className="mx-auto h-12 w-12 mb-4 opacity-50" />
                 <p className="text-lg font-medium mb-2">No Locations</p>
                 <p className="text-sm">Add locations by scanning QR codes</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {locations.map(location => (
-                  <Card 
-                    key={location.id} 
-                    className="p-4 cursor-pointer hover:shadow-md transition-all" 
-                    onClick={() => handleLocationSelect(location)}
-                  >
+              </div> : <div className="space-y-3">
+                {locations.map(location => <Card key={location.id} className="p-4 cursor-pointer hover:shadow-md transition-all" onClick={() => handleLocationSelect(location)}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -291,11 +260,7 @@ export default function UserDashboard() {
                           <p className="text-sm text-muted-foreground line-clamp-2">{location.location_address}</p>
                           <div className="flex items-center space-x-4 mt-1">
                             <span className="text-xs text-muted-foreground">PIN: {location.location_pincode}</span>
-                            <span className={`text-xs font-medium ${
-                              location.status.toLowerCase() === 'active'
-                                ? 'text-green-600'
-                                : 'text-muted-foreground'
-                            }`}>
+                            <span className={`text-xs font-medium ${location.status.toLowerCase() === 'active' ? 'text-green-600' : 'text-muted-foreground'}`}>
                               {location.status.toUpperCase()}
                             </span>
                           </div>
@@ -303,19 +268,13 @@ export default function UserDashboard() {
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     </div>
-                  </Card>
-                ))}
-              </div>
-            )}
+                  </Card>)}
+              </div>}
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4 mt-6">
-            {loading ? (
-              <div className="text-center py-8">Loading...</div>
-            ) : historyReservations.length > 0 ? (
-              <div className="space-y-4">
-                {historyReservations.map(reservation => (
-                  <Card key={reservation.id} className="p-4">
+            {loading ? <div className="text-center py-8">Loading...</div> : historyReservations.length > 0 ? <div className="space-y-4">
+                {historyReservations.map(reservation => <Card key={reservation.id} className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -334,36 +293,22 @@ export default function UserDashboard() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className={`text-xs font-medium px-2 py-1 rounded ${
-                          reservation.reservation_status === 'PickupCompleted'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className={`text-xs font-medium px-2 py-1 rounded ${reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                           {reservation.reservation_status}
                         </span>
                       </div>
                     </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
+                  </Card>)}
+              </div> : <div className="text-center py-12 text-muted-foreground">
                 <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
                 <p className="text-lg font-medium mb-2">No History</p>
                 <p className="text-sm">Your reservation history will appear here</p>
-              </div>
-            )}
+              </div>}
           </TabsContent>
         </Tabs>
       </div>
 
       {/* Location Detection Popup */}
-      <LocationDetectionPopup 
-        isOpen={showLocationPopup} 
-        onClose={closeLocationPopup} 
-        userId={user?.id || 0} 
-        locationId={currentLocationId || ""} 
-      />
-    </div>
-  );
+      <LocationDetectionPopup isOpen={showLocationPopup} onClose={closeLocationPopup} userId={user?.id || 0} locationId={currentLocationId || ""} />
+    </div>;
 }
