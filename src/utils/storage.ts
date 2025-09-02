@@ -90,3 +90,12 @@ export const saveLocationName = (locationName: string): void => {
 export const getLocationName = (): string | null => {
   return localStorage.getItem('current_location_name');
 };
+
+// Old passcode storage
+export const saveOldPasscode = (passcode: string): void => {
+  localStorage.setItem('user_old_passcode', passcode);
+};
+
+export const getOldPasscode = (): string | null => {
+  return localStorage.getItem('user_old_passcode');
+};

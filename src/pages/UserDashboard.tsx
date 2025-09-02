@@ -219,7 +219,7 @@ export default function UserDashboard() {
           <Card className="p-4 text-center">
             <p className="text-sm text-muted-foreground mb-1">Old Passcode</p>
             <p className="text-lg font-semibold text-foreground">
-              ****
+              {localStorage.getItem('user_old_passcode') || '-'}
             </p>
           </Card>
         </div>
@@ -249,7 +249,7 @@ export default function UserDashboard() {
                 <p className="text-lg font-medium mb-2">No Locations</p>
                 <p className="text-sm">Add locations by scanning QR codes</p>
               </div> : <div className="space-y-3">
-                {locations.map(location => <Card key={location.id} className="p-4 cursor-pointer hover:shadow-md transition-all" onClick={() => handleLocationSelect(location)}>
+                {locations.map(location => <Card key={location.id} className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">

@@ -79,7 +79,7 @@ export function Header({
                           Profile
                         </Button>
                       </SheetClose>
-                      {user?.user_type !== 'SiteSecurity' && (
+                      {user?.user_type !== 'SiteSecurity' && user?.user_type !== 'Customer' && user?.user_type !== 'User' && (
                         <SheetClose asChild>
                           <Button variant="ghost" className="w-full justify-start h-12 px-4 rounded-none" onClick={() => navigate('/rto')}>
                             <Package className="mr-3 h-4 w-4" />
@@ -176,7 +176,8 @@ export function Header({
               Cancel
             </Button>
             <Button 
-              onClick={() => {
+              onClick={async () => {
+                // Validation
                 if (passcodeData.newPasscode !== passcodeData.confirmPasscode) {
                   toast({
                     title: "Error",
@@ -185,16 +186,81 @@ export function Header({
                   });
                   return;
                 }
-                toast({
-                  title: "Success",
-                  description: "Passcode changed successfully",
-                });
-                setShowPasscodeDialog(false);
-                setPasscodeData({ newPasscode: '', confirmPasscode: '' });
+                
+                if (passcodeData.newPasscode.length < 6) {
+                  toast({
+                    title: "Error",
+                    description: "Passcode must be at least 6 digits",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                
+                if (passcodeData.newPasscode.length > 10) {
+                  toast({
+                    title: "Error",
+                    description: "Passcode must not exceed 10 digits",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                
+                if (!/^\d+$/.test(passcodeData.newPasscode)) {
+                  toast({
+                    title: "Error",
+                    description: "Passcode must contain only numbers",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+
+                try {
+                  const authToken = localStorage.getItem('auth_token');
+                  const userPhone = user?.user_phone;
+                  
+                  if (!authToken || !userPhone) {
+                    toast({
+                      title: "Error",
+                      description: "Authentication required",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+
+                  const response = await fetch(`https://stagingv3.leapmile.com/podcore/adhoc/generate_user_code/?user_phone=${userPhone}&change_code=False&new_passcode=${passcodeData.newPasscode}`, {
+                    method: 'POST',
+                    headers: {
+                      'accept': 'application/json',
+                      'Authorization': `Bearer ${authToken}`
+                    },
+                    body: ''
+                  });
+
+                  if (!response.ok) {
+                    throw new Error('Failed to change passcode');
+                  }
+
+                  // Save old passcode to storage
+                  localStorage.setItem('user_old_passcode', user?.user_pickupcode || '');
+                  
+                  toast({
+                    title: "Success",
+                    description: "Passcode changed successfully",
+                  });
+                  setShowPasscodeDialog(false);
+                  setPasscodeData({ newPasscode: '', confirmPasscode: '' });
+                } catch (error) {
+                  console.error('Error changing passcode:', error);
+                  toast({
+                    title: "Error",
+                    description: "Failed to change passcode. Please try again.",
+                    variant: "destructive"
+                  });
+                }
               }} 
               className="flex-1 btn-primary"
             >
-              Submit
+              Change Passcode
             </Button>
           </DialogFooter>
         </DialogContent>
