@@ -34,7 +34,6 @@ const App = () => (
           <Route path="/login" element={<PageLayout pageTitle="Login" showBack={false} showSettings={false}><Login /></PageLayout>} />
           <Route path="/registration" element={<PageLayout pageTitle="Registration" showBack={true} showSettings={false}><Registration /></PageLayout>} />
           <Route path="/user-dashboard" element={<PageLayout pageTitle="User Dashboard" showBack={false}><UserDashboard /></PageLayout>} />
-          {/* Keep legacy route for backward compatibility */}
           <Route path="/customer-dashboard" element={<PageLayout pageTitle="User Dashboard" showBack={false}><UserDashboard /></PageLayout>} />
           <Route path="/site-admin-dashboard" element={<PageLayout pageTitle="Site Admin" showBack={true}><SiteAdminDashboard /></PageLayout>} />
           <Route path="/site-security-dashboard" element={<PageLayout pageTitle="Site Security" showBack={true}><SiteSecurityDashboard /></PageLayout>} />
@@ -46,7 +45,6 @@ const App = () => (
           <Route path="/reservation-details/:reservationId" element={<PageLayout pageTitle="Reservation Details" showBack={true}><ReservationDetails /></PageLayout>} />
           <Route path="/how-it-works" element={<PageLayout pageTitle="How it Works" showBack={true} showSettings={false}><HowItWorks /></PageLayout>} />
           <Route path="/credits" element={<PageLayout pageTitle="Credits" showBack={true}><Credits /></PageLayout>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<PageLayout pageTitle="Not Found" showBack={true}><NotFound /></PageLayout>} />
         </Routes>
       </BrowserRouter>
