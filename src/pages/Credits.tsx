@@ -72,12 +72,13 @@ export default function Credits() {
       
       if (response.ok) {
         const data = await response.json();
-        setPaymentHistory(data.sort((a: PaymentRecord, b: PaymentRecord) => 
+        const records = data.records || [];
+        setPaymentHistory(records.sort((a: PaymentRecord, b: PaymentRecord) => 
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         ));
 
         // Check for latest pending payment
-        const latestPayment = data[0];
+        const latestPayment = records[0];
         if (latestPayment && latestPayment.payment_status === 'pending') {
           setPendingPayment(latestPayment);
           startPaymentStatusCheck(latestPayment.id);
@@ -137,7 +138,7 @@ export default function Credits() {
       const referenceId = `${user?.user_phone}_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
       const response = await fetch(
-        `https://stagingv3.leapmile.com/payments/payments/create_payment/?payment_client_awbno=${user?.user_phone}&amount=${amountPayable}&payment_client_reference_id=${referenceId}&user_id=${user?.id}&user_credits=${balanceCredits}&payment_vendor=${selectedPaymentMethod}`,
+        `https://stagingv3.leapmile.com/payments/payments/create_payment/?payment_client_awbno=${user?.user_phone}&amount=${amountPayable}&payment_client_reference_id=${referenceId}&user_id=${user?.id}&user_credits=${Math.abs(balanceCredits)}&payment_vendor=${selectedPaymentMethod}`,
         {
           method: 'POST',
           headers: {
@@ -246,47 +247,43 @@ export default function Credits() {
             )}
 
             {/* Payment Method Selection */}
-            {amountPayable > 0 && (
-              <>
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium">Select Payment Method</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {paymentMethods.map((method) => (
-                      <Card
-                        key={method.id}
-                        className={`p-3 cursor-pointer transition-colors ${
-                          selectedPaymentMethod === method.id
-                            ? 'ring-2 ring-primary bg-primary/5'
-                            : 'hover:bg-accent'
-                        }`}
-                        onClick={() => setSelectedPaymentMethod(method.id)}
-                      >
-                        <div className="flex flex-col items-center space-y-2">
-                          <img 
-                            src={method.logo} 
-                            alt={method.name}
-                            className="h-8 object-contain"
-                          />
-                          <span className="text-xs font-medium">{method.name}</span>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium">Select Payment Method</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {paymentMethods.map((method) => (
+                  <Card
+                    key={method.id}
+                    className={`p-3 cursor-pointer transition-colors ${
+                      selectedPaymentMethod === method.id
+                        ? 'ring-2 ring-primary bg-primary/5'
+                        : 'hover:bg-accent'
+                    }`}
+                    onClick={() => setSelectedPaymentMethod(method.id)}
+                  >
+                    <div className="flex flex-col items-center space-y-2">
+                      <img 
+                        src={method.logo} 
+                        alt={method.name}
+                        className="h-8 object-contain"
+                      />
+                      <span className="text-xs font-medium">{method.name}</span>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
 
-                {/* Pay Button */}
-                <Button
-                  onClick={createPayment}
-                  disabled={!selectedPaymentMethod || amountPayable <= 0 || !!pendingPayment || isLoading}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isLoading ? 'Processing...' : `Pay ₹${amountPayable.toFixed(1)}`}
-                </Button>
-              </>
-            )}
-
-            {amountPayable === 0 && (
+            {/* Pay Button */}
+            {amountPayable > 0 ? (
+              <Button
+                onClick={createPayment}
+                disabled={!selectedPaymentMethod || amountPayable <= 0 || !!pendingPayment || isLoading}
+                className="w-full"
+                size="lg"
+              >
+                {isLoading ? 'Processing...' : `Pay ₹${amountPayable.toFixed(1)}`}
+              </Button>
+            ) : (
               <Card className="p-4 text-center">
                 <p className="text-muted-foreground">No payment required. Your credit balance is positive.</p>
               </Card>
