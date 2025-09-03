@@ -1,129 +1,331 @@
 import { getUserData, isLoggedIn } from "@/utils/storage";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CreditCard, Plus, History } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CreditCard, History } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface PaymentMethod {
+  id: 'razorpay' | 'paytm';
+  name: string;
+  logo: string;
+}
+
+interface PaymentRecord {
+  id: string;
+  payment_amount: number;
+  payment_vendor: string;
+  payment_status: string;
+  created_at: string;
+  payment_url?: string;
+}
+
+const paymentMethods: PaymentMethod[] = [
+  {
+    id: 'razorpay',
+    name: 'Razorpay',
+    logo: 'https://app.qikpod.com/assets/assets/images/1545306239_rzp-glyph-positive_1.png'
+  },
+  {
+    id: 'paytm',
+    name: 'Paytm',
+    logo: 'https://pwebassets.paytm.com/commonwebassets/paytmweb/footer/images/paytmLogo.svg'
+  }
+];
 
 export default function Credits() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const user = getUserData();
+  
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'razorpay' | 'paytm' | null>(null);
+  const [paymentHistory, setPaymentHistory] = useState<PaymentRecord[]>([]);
+  const [pendingPayment, setPendingPayment] = useState<PaymentRecord | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn()) {
       navigate('/login');
       return;
     }
+    fetchPaymentHistory();
   }, [navigate]);
 
-  const availableCredits = user?.user_credit_limit ? Number(user.user_credit_limit) - Number(user.user_credit_used || 0) : 0;
-  const totalCredits = user?.user_credit_limit ? Number(user.user_credit_limit) : 0;
-  const usedCredits = user?.user_credit_used ? Number(user.user_credit_used) : 0;
+  // Calculate balance credits and amount payable
+  const balanceCredits = user?.user_credit_limit ? Number(user.user_credit_limit) - Number(user.user_credit_used || 0) : 0;
+  const amountPayable = balanceCredits < 0 ? Math.abs(balanceCredits) * 1.5 : 0;
+
+  const fetchPaymentHistory = async () => {
+    try {
+      const authToken = localStorage.getItem('auth_token');
+      const response = await fetch(
+        `https://stagingv3.leapmile.com/payments/payments/?user_id=${user?.id}`,
+        {
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          }
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPaymentHistory(data.sort((a: PaymentRecord, b: PaymentRecord) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        ));
+
+        // Check for latest pending payment
+        const latestPayment = data[0];
+        if (latestPayment && latestPayment.payment_status === 'pending') {
+          setPendingPayment(latestPayment);
+          startPaymentStatusCheck(latestPayment.id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching payment history:', error);
+    }
+  };
+
+  const startPaymentStatusCheck = (paymentId: string) => {
+    let attempts = 0;
+    const maxAttempts = 6; // 30 seconds / 5 seconds interval
+
+    const checkStatus = async () => {
+      if (attempts >= maxAttempts) return;
+
+      try {
+        const authToken = localStorage.getItem('auth_token');
+        const response = await fetch(
+          `https://stagingv3.leapmile.com/payments/payments/?record_id=${paymentId}`,
+          {
+            headers: {
+              'accept': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            }
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.payment_status === 'success') {
+            setPendingPayment(null);
+            fetchPaymentHistory();
+            window.location.reload(); // Reload to update credits
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking payment status:', error);
+      }
+
+      attempts++;
+      setTimeout(checkStatus, 5000); // Check again after 5 seconds
+    };
+
+    checkStatus();
+  };
+
+  const createPayment = async () => {
+    if (!selectedPaymentMethod || amountPayable <= 0) return;
+
+    setIsLoading(true);
+    try {
+      const authToken = localStorage.getItem('auth_token');
+      const now = new Date();
+      const referenceId = `${user?.user_phone}_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+      const response = await fetch(
+        `https://stagingv3.leapmile.com/payments/payments/create_payment/?payment_client_awbno=${user?.user_phone}&amount=${amountPayable}&payment_client_reference_id=${referenceId}&user_id=${user?.id}&user_credits=${balanceCredits}&payment_vendor=${selectedPaymentMethod}`,
+        {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.payment_url) {
+          // Open payment URL in new tab
+          window.open(data.payment_url, '_blank');
+          
+          // Set as pending payment and start status checking
+          const pendingPaymentData = {
+            id: data.id,
+            payment_amount: amountPayable,
+            payment_vendor: selectedPaymentMethod,
+            payment_status: 'pending',
+            created_at: new Date().toISOString(),
+            payment_url: data.payment_url
+          };
+          setPendingPayment(pendingPaymentData);
+          startPaymentStatusCheck(data.id);
+          
+          toast({
+            title: "Payment initiated",
+            description: "Please complete the payment in the new tab."
+          });
+        }
+      } else {
+        throw new Error('Failed to create payment');
+      }
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initiate payment. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-md mx-auto px-[14px] py-6 space-y-6">
-        {/* Current Credits Overview */}
+        {/* Credits Display */}
         <Card className="p-6 bg-gradient-primary text-qikpod-black">
           <div className="flex items-center space-x-3 mb-4">
             <CreditCard className="w-8 h-8" />
             <div>
-              <h1 className="text-xl font-bold">Credits Overview</h1>
+              <h1 className="text-xl font-bold">Credits</h1>
               <p className="text-sm opacity-80">{user?.user_name}</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4 mt-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold">{availableCredits}</p>
-              <p className="text-xs opacity-80">Available</p>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Balance Credits:</span>
+              <span className="text-xl font-bold">{balanceCredits}</span>
             </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">{usedCredits}</p>
-              <p className="text-xs opacity-80">Used</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">{totalCredits}</p>
-              <p className="text-xs opacity-80">Total</p>
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Amount Payable:</span>
+              <span className="text-xl font-bold">₹{amountPayable.toFixed(1)}</span>
             </div>
           </div>
         </Card>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="p-4">
-            <Button className="w-full h-12 flex items-center justify-center space-x-2">
-              <Plus className="w-4 h-4" />
-              <span>Add Credits</span>
-            </Button>
-          </Card>
-          <Card className="p-4">
-            <Button variant="outline" className="w-full h-12 flex items-center justify-center space-x-2">
-              <History className="w-4 h-4" />
-              <span>Transaction History</span>
-            </Button>
-          </Card>
-        </div>
+        <Tabs defaultValue="payment" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="payment">Payment</TabsTrigger>
+            <TabsTrigger value="history">Payment History</TabsTrigger>
+          </TabsList>
 
-        {/* Credit Packages */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Credit Packages</h2>
-          
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium">Basic Package</h3>
-                <p className="text-sm text-muted-foreground">100 Credits</p>
-              </div>
-              <div className="text-right">
-                <p className="text-lg font-bold">₹500</p>
-                <Button size="sm" className="mt-1">
-                  Purchase
+          <TabsContent value="payment" className="space-y-4">
+            {/* Pending Payment Section */}
+            {pendingPayment && (
+              <Card className="p-4 border-orange-200 bg-orange-50">
+                <h3 className="font-medium mb-2 text-orange-800">Pending Payment</h3>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-orange-600">
+                    ₹{pendingPayment.payment_amount} via {pendingPayment.payment_vendor}
+                  </span>
+                  <Button 
+                    size="sm"
+                    onClick={() => window.open(pendingPayment.payment_url, '_blank')}
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    Pay Now
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* Payment Method Selection */}
+            {amountPayable > 0 && (
+              <>
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium">Select Payment Method</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {paymentMethods.map((method) => (
+                      <Card
+                        key={method.id}
+                        className={`p-3 cursor-pointer transition-colors ${
+                          selectedPaymentMethod === method.id
+                            ? 'ring-2 ring-primary bg-primary/5'
+                            : 'hover:bg-accent'
+                        }`}
+                        onClick={() => setSelectedPaymentMethod(method.id)}
+                      >
+                        <div className="flex flex-col items-center space-y-2">
+                          <img 
+                            src={method.logo} 
+                            alt={method.name}
+                            className="h-8 object-contain"
+                          />
+                          <span className="text-xs font-medium">{method.name}</span>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pay Button */}
+                <Button
+                  onClick={createPayment}
+                  disabled={!selectedPaymentMethod || amountPayable <= 0 || !!pendingPayment || isLoading}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isLoading ? 'Processing...' : `Pay ₹${amountPayable.toFixed(1)}`}
                 </Button>
-              </div>
-            </div>
-          </Card>
+              </>
+            )}
 
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium">Standard Package</h3>
-                <p className="text-sm text-muted-foreground">250 Credits</p>
-              </div>
-              <div className="text-right">
-                <p className="text-lg font-bold">₹1,200</p>
-                <Button size="sm" className="mt-1">
-                  Purchase
-                </Button>
-              </div>
-            </div>
-          </Card>
+            {amountPayable === 0 && (
+              <Card className="p-4 text-center">
+                <p className="text-muted-foreground">No payment required. Your credit balance is positive.</p>
+              </Card>
+            )}
+          </TabsContent>
 
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium">Premium Package</h3>
-                <p className="text-sm text-muted-foreground">500 Credits</p>
+          <TabsContent value="history" className="space-y-4">
+            {paymentHistory.length > 0 ? (
+              <div className="space-y-3">
+                {paymentHistory.map((payment) => (
+                  <Card key={payment.id} className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium">₹{payment.payment_amount}</p>
+                        <p className="text-sm text-muted-foreground">{payment.payment_vendor}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(payment.created_at)}</p>
+                      </div>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          payment.payment_status === 'success'
+                            ? 'bg-green-100 text-green-800'
+                            : payment.payment_status === 'pending'
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {payment.payment_status}
+                      </span>
+                    </div>
+                  </Card>
+                ))}
               </div>
-              <div className="text-right">
-                <p className="text-lg font-bold">₹2,300</p>
-                <Button size="sm" className="mt-1">
-                  Purchase
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Terms */}
-        <Card className="p-4 bg-muted">
-          <h3 className="font-medium mb-2">Terms & Conditions</h3>
-          <ul className="text-xs text-muted-foreground space-y-1">
-            <li>• Credits are non-refundable</li>
-            <li>• Credits expire after 1 year from purchase</li>
-            <li>• Credits can be used for locker reservations</li>
-            <li>• Contact support for any credit-related issues</li>
-          </ul>
-        </Card>
+            ) : (
+              <Card className="p-4 text-center">
+                <p className="text-muted-foreground">No payment history found.</p>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
