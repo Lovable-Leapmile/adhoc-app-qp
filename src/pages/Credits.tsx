@@ -1,6 +1,6 @@
-import { getUserData, isLoggedIn } from "@/utils/storage";
+import { getUserData, isLoggedIn, refreshUserData } from "@/utils/storage";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,7 +49,7 @@ export default function Credits() {
   const balanceCredits = userData?.user_credit_limit ? Number(userData.user_credit_limit) - Number(userData.user_credit_used || 0) : 0;
   const amountPayable = balanceCredits < 0 ? Math.abs(balanceCredits) * 1.5 : 0;
 
-  const fetchPaymentHistory = async () => {
+  const fetchPaymentHistory = useCallback(async () => {
     if (!userData?.id) return;
     
     try {
@@ -76,12 +76,29 @@ export default function Credits() {
         if (latestPayment && latestPayment.payment_status === 'pending') {
           setPendingPayment(latestPayment);
           startPaymentStatusCheck(latestPayment.id);
+        } else {
+          setPendingPayment(null);
         }
       }
     } catch (error) {
       console.error('Error fetching payment history:', error);
     }
-  };
+  }, [userData?.id]);
+
+  const refreshAllData = useCallback(async () => {
+    try {
+      // Refresh user data from API
+      const freshUserData = await refreshUserData();
+      if (freshUserData) {
+        setUserData(freshUserData);
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      // Fallback to cached data if API fails
+      const cachedUserData = getUserData();
+      setUserData(cachedUserData);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -89,26 +106,31 @@ export default function Credits() {
       return;
     }
     
-    const refreshData = () => {
-      const latestUserData = getUserData();
-      setUserData(latestUserData);
-    };
-    
-    // Initial refresh
-    refreshData();
+    // Initial data refresh
+    refreshAllData();
     
     // Set up periodic refresh for live data updates
-    const refreshInterval = setInterval(refreshData, 10000); // Refresh every 10 seconds
+    const refreshInterval = setInterval(refreshAllData, 10000); // Refresh every 10 seconds
 
-    return () => clearInterval(refreshInterval);
-  }, [navigate]);
+    // Refresh data when user returns to the page (e.g., from payment gateway)
+    const handleFocus = () => {
+      refreshAllData();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(refreshInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [navigate, refreshAllData]);
 
   // Effect to fetch payment history when userData changes
   useEffect(() => {
     if (userData?.id) {
       fetchPaymentHistory();
     }
-  }, [userData?.id]);
+  }, [userData?.id, fetchPaymentHistory]);
 
   const startPaymentStatusCheck = (paymentId: string) => {
     let attempts = 0;
@@ -131,12 +153,12 @@ export default function Credits() {
 
         if (response.ok) {
           const data = await response.json();
-          if (data.payment_status === 'success') {
-            setPendingPayment(null);
-            fetchPaymentHistory();
-            window.location.reload(); // Reload to update credits
-            return;
-          }
+        if (data.payment_status === 'success') {
+          setPendingPayment(null);
+          await refreshAllData(); // Refresh user data from API
+          fetchPaymentHistory(); // Refresh payment history
+          return;
+        }
         }
       } catch (error) {
         console.error('Error checking payment status:', error);
@@ -150,7 +172,7 @@ export default function Credits() {
   };
 
   const createPayment = async () => {
-    if (!selectedPaymentMethod || amountPayable <= 0) return;
+    if (!selectedPaymentMethod || amountPayable <= 0 || pendingPayment) return;
 
     setIsLoading(true);
     try {
@@ -179,10 +201,12 @@ export default function Credits() {
       if (response.ok) {
         const data = await response.json();
         if (data.payment_url) {
-          // Auto-navigate to payment URL
-          window.location.href = data.payment_url;
+          toast({
+            title: "Payment initiated",
+            description: "Redirecting to payment page..."
+          });
           
-          // Set as pending payment and start status checking
+          // Set as pending payment before redirect
           const pendingPaymentData = {
             id: data.id,
             payment_amount: amountPayable,
@@ -192,12 +216,10 @@ export default function Credits() {
             payment_url: data.payment_url
           };
           setPendingPayment(pendingPaymentData);
-          startPaymentStatusCheck(data.id);
           
-          toast({
-            title: "Payment initiated",
-            description: "Redirecting to payment page..."
-          });
+          // Redirect immediately - this should stop all other code execution
+          window.location.href = data.payment_url;
+          return; // Prevent further execution
         }
       } else {
         throw new Error('Failed to create payment');
@@ -298,7 +320,7 @@ export default function Credits() {
               </Card>
             )}
 
-            {/* Pending Payment Section */}
+            {/* Pending Payment Section - Moved below Pay button */}
             {pendingPayment && (
               <Card className="p-4 border-orange-200 bg-orange-50">
                 <h3 className="font-medium mb-2 text-orange-800">Pending Payment</h3>
@@ -308,12 +330,15 @@ export default function Credits() {
                   </span>
                   <Button 
                     size="sm"
-                    onClick={() => window.open(pendingPayment.payment_url, '_blank')}
+                    onClick={() => window.location.href = pendingPayment.payment_url || ''}
                     className="bg-orange-600 hover:bg-orange-700"
                   >
                     Pay Now
                   </Button>
                 </div>
+                <p className="text-xs text-orange-500 mt-2">
+                  Complete your pending payment before creating a new one.
+                </p>
               </Card>
             )}
           </TabsContent>
