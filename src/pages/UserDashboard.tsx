@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Package, Clock, ChevronRight } from "lucide-react";
 import { apiService, UserLocation } from "@/services/api";
-import { getUserData, isLoggedIn, getPodName, getLocationId, saveLastLocation, saveLocationId } from "@/utils/storage";
+import { getUserData, isLoggedIn, getPodName, getLocationId, saveLastLocation, saveLocationId, refreshUserData } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
 import { LocationDetectionPopup } from "@/components/LocationDetectionPopup";
 import { useLocationDetection } from "@/hooks/useLocationDetection";
+import { User } from "@/types";
 export interface HistoryReservation {
   id: string;
   reservation_status: string;
@@ -27,7 +28,7 @@ export default function UserDashboard() {
   const {
     toast
   } = useToast();
-  const user = getUserData();
+  const [user, setUser] = useState<User | null>(getUserData());
   const [locations, setLocations] = useState<UserLocation[]>([]);
   const [historyReservations, setHistoryReservations] = useState<HistoryReservation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,6 +41,18 @@ export default function UserDashboard() {
     showLocationPopup,
     closeLocationPopup
   } = useLocationDetection(user?.id, currentLocationId);
+  // Refresh user data function
+  const handleRefreshUserData = useCallback(async () => {
+    try {
+      const refreshedUser = await refreshUserData();
+      if (refreshedUser) {
+        setUser(refreshedUser);
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isLoggedIn()) {
       navigate('/login');
@@ -50,7 +63,35 @@ export default function UserDashboard() {
       return;
     }
     initializeData();
-  }, [navigate]);
+    handleRefreshUserData();
+
+    // Set up periodic refresh every 30 seconds
+    const refreshInterval = setInterval(handleRefreshUserData, 30000);
+
+    // Also refresh when the page becomes visible again (user switches back to tab)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        handleRefreshUserData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(refreshInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [navigate, handleRefreshUserData]);
+
+  // Refresh user data when coming from other pages
+  useEffect(() => {
+    const handleFocus = () => {
+      handleRefreshUserData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [handleRefreshUserData]);
   const initializeData = async () => {
     const podName = getPodName();
     if (podName) {

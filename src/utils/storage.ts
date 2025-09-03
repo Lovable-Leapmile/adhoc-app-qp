@@ -1,4 +1,5 @@
 import { User } from "@/types";
+import { apiService } from "@/services/api";
 
 // POD name extraction and storage from URL
 export const extractPodNameFromUrl = (): string | null => {
@@ -98,4 +99,39 @@ export const saveOldPasscode = (passcode: string): void => {
 
 export const getOldPasscode = (): string | null => {
   return localStorage.getItem('user_old_passcode');
+};
+
+// Refresh user data from API
+export const refreshUserData = async (): Promise<User | null> => {
+  try {
+    const currentUser = getUserData();
+    if (!currentUser) return null;
+
+    const updatedUserData = await apiService.getUserById(currentUser.id.toString());
+    if (updatedUserData) {
+      const refreshedUser: User = {
+        id: updatedUserData.id,
+        user_name: updatedUserData.user_name,
+        user_phone: updatedUserData.user_phone,
+        user_email: updatedUserData.user_email,
+        user_address: updatedUserData.user_address,
+        user_type: updatedUserData.user_type,
+        user_flatno: updatedUserData.user_flatno,
+        user_dropcode: updatedUserData.user_dropcode,
+        user_pickupcode: updatedUserData.user_pickupcode,
+        user_credit_limit: updatedUserData.user_credit_limit,
+        user_credit_used: updatedUserData.user_credit_used,
+        status: updatedUserData.status,
+        created_at: updatedUserData.created_at,
+        updated_at: updatedUserData.updated_at,
+      };
+      
+      saveUserData(refreshedUser);
+      return refreshedUser;
+    }
+    return currentUser;
+  } catch (error) {
+    console.error('Error refreshing user data:', error);
+    return getUserData(); // Return cached data if refresh fails
+  }
 };
