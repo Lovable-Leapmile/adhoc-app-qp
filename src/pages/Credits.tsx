@@ -38,30 +38,24 @@ const paymentMethods: PaymentMethod[] = [
 export default function Credits() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const user = getUserData();
   
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'razorpay' | 'paytm' | null>(null);
   const [paymentHistory, setPaymentHistory] = useState<PaymentRecord[]>([]);
   const [pendingPayment, setPendingPayment] = useState<PaymentRecord | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [userData, setUserData] = useState(getUserData());
 
-  useEffect(() => {
-    if (!isLoggedIn()) {
-      navigate('/login');
-      return;
-    }
-    fetchPaymentHistory();
-  }, [navigate]);
-
-  // Calculate balance credits and amount payable
-  const balanceCredits = user?.user_credit_limit ? Number(user.user_credit_limit) - Number(user.user_credit_used || 0) : 0;
+  // Calculate balance credits and amount payable using live data
+  const balanceCredits = userData?.user_credit_limit ? Number(userData.user_credit_limit) - Number(userData.user_credit_used || 0) : 0;
   const amountPayable = balanceCredits < 0 ? Math.abs(balanceCredits) * 1.5 : 0;
 
   const fetchPaymentHistory = async () => {
+    if (!userData?.id) return;
+    
     try {
       const authToken = localStorage.getItem('auth_token');
       const response = await fetch(
-        `https://stagingv3.leapmile.com/payments/payments/?user_id=${user?.id}`,
+        `https://stagingv3.leapmile.com/payments/payments/?user_id=${userData.id}`,
         {
           headers: {
             'accept': 'application/json',
@@ -88,6 +82,33 @@ export default function Credits() {
       console.error('Error fetching payment history:', error);
     }
   };
+
+  useEffect(() => {
+    if (!isLoggedIn()) {
+      navigate('/login');
+      return;
+    }
+    
+    const refreshData = () => {
+      const latestUserData = getUserData();
+      setUserData(latestUserData);
+    };
+    
+    // Initial refresh
+    refreshData();
+    
+    // Set up periodic refresh for live data updates
+    const refreshInterval = setInterval(refreshData, 10000); // Refresh every 10 seconds
+
+    return () => clearInterval(refreshInterval);
+  }, [navigate]);
+
+  // Effect to fetch payment history when userData changes
+  useEffect(() => {
+    if (userData?.id) {
+      fetchPaymentHistory();
+    }
+  }, [userData?.id]);
 
   const startPaymentStatusCheck = (paymentId: string) => {
     let attempts = 0;
@@ -135,10 +156,17 @@ export default function Credits() {
     try {
       const authToken = localStorage.getItem('auth_token');
       const now = new Date();
-      const referenceId = `${user?.user_phone}_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      // Format: {userId}-{DDMMYYYYHHMMSS}
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const referenceId = `${userData?.id}-${day}${month}${year}${hours}${minutes}${seconds}`;
 
       const response = await fetch(
-        `https://stagingv3.leapmile.com/payments/payments/create_payment/?payment_client_awbno=${user?.user_phone}&amount=${amountPayable}&payment_client_reference_id=${referenceId}&user_id=${user?.id}&user_credits=${Math.abs(balanceCredits)}&payment_vendor=${selectedPaymentMethod}`,
+        `https://stagingv3.leapmile.com/payments/payments/create_payment/?payment_client_awbno=${userData?.user_phone}&amount=${amountPayable}&payment_client_reference_id=${referenceId}&user_id=${userData?.id}&user_credits=${Math.abs(balanceCredits)}&payment_vendor=${selectedPaymentMethod}`,
         {
           method: 'POST',
           headers: {
@@ -151,8 +179,8 @@ export default function Credits() {
       if (response.ok) {
         const data = await response.json();
         if (data.payment_url) {
-          // Open payment URL in new tab
-          window.open(data.payment_url, '_blank');
+          // Auto-navigate to payment URL
+          window.location.href = data.payment_url;
           
           // Set as pending payment and start status checking
           const pendingPaymentData = {
@@ -168,7 +196,7 @@ export default function Credits() {
           
           toast({
             title: "Payment initiated",
-            description: "Please complete the payment in the new tab."
+            description: "Redirecting to payment page..."
           });
         }
       } else {
@@ -205,7 +233,7 @@ export default function Credits() {
             <CreditCard className="w-8 h-8" />
             <div>
               <h1 className="text-xl font-bold">Credits</h1>
-              <p className="text-sm opacity-80">{user?.user_name}</p>
+              <p className="text-sm opacity-80">{userData?.user_name}</p>
             </div>
           </div>
           <div className="space-y-2">
