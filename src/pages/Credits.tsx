@@ -227,25 +227,6 @@ export default function Credits() {
           </TabsList>
 
           <TabsContent value="payment" className="space-y-4">
-            {/* Pending Payment Section */}
-            {pendingPayment && (
-              <Card className="p-4 border-orange-200 bg-orange-50">
-                <h3 className="font-medium mb-2 text-orange-800">Pending Payment</h3>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-orange-600">
-                    ₹{pendingPayment.payment_amount} via {pendingPayment.payment_vendor}
-                  </span>
-                  <Button 
-                    size="sm"
-                    onClick={() => window.open(pendingPayment.payment_url, '_blank')}
-                    className="bg-orange-600 hover:bg-orange-700"
-                  >
-                    Pay Now
-                  </Button>
-                </div>
-              </Card>
-            )}
-
             {/* Payment Method Selection */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium">Select Payment Method</h3>
@@ -286,6 +267,25 @@ export default function Credits() {
             ) : (
               <Card className="p-4 text-center">
                 <p className="text-muted-foreground">No payment required. Your credit balance is positive.</p>
+              </Card>
+            )}
+
+            {/* Pending Payment Section */}
+            {pendingPayment && (
+              <Card className="p-4 border-orange-200 bg-orange-50">
+                <h3 className="font-medium mb-2 text-orange-800">Pending Payment</h3>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-orange-600">
+                    ₹{pendingPayment.payment_amount} via {pendingPayment.payment_vendor}
+                  </span>
+                  <Button 
+                    size="sm"
+                    onClick={() => window.open(pendingPayment.payment_url, '_blank')}
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    Pay Now
+                  </Button>
+                </div>
               </Card>
             )}
           </TabsContent>
