@@ -510,31 +510,31 @@ export default function SiteAdminDashboard() {
                   </p>
                 </div> : <div className="space-y-4">
                   {currentItems.map((reservation: any) => <Card key={reservation.id} className="p-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <Package className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium text-foreground">{reservation.pod_name || 'N/A'}</h3>
-                          <div className="flex items-center justify-between mt-1">
-                            <span className={`text-xs font-medium px-2 py-1 rounded ${reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : reservation.reservation_status === 'DropCompleted' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
-                              {reservation.reservation_status}
-                            </span>
-                            <span className="text-xs text-muted-foreground">Door: {reservation.door_number || 'N/A'}</span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 mt-2">
-                            <div>
-                              <p className="text-xs text-muted-foreground">User: {reservation.user_name}</p>
-                              <p className="text-xs text-muted-foreground">Drop: {reservation.drop_time ? formatDate(reservation.drop_time) : 'N/A'}</p>
-                              <p className="text-xs text-muted-foreground">Duration: {reservation.duration || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Flat: {reservation.user_flatno || 'N/A'}</p>
-                              <p className="text-xs text-muted-foreground">Pickup: {reservation.pickup_time ? formatDate(reservation.pickup_time) : 'N/A'}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                       <div className="flex items-center space-x-3">
+                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                           <Package className="w-5 h-5 text-primary" />
+                         </div>
+                         <div className="flex-1">
+                           <h3 className="font-medium text-foreground">{reservation.pod_name || 'N/A'}</h3>
+                           <div className="flex items-center justify-end mt-1 space-x-4">
+                             <span className={`text-xs font-medium px-2 py-1 rounded ${reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : reservation.reservation_status === 'DropCompleted' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                               {reservation.reservation_status}
+                             </span>
+                             <span className="text-xs text-muted-foreground"><span className="font-semibold">Door:</span> {reservation.door_number || 'N/A'}</span>
+                           </div>
+                           <div className="grid grid-cols-2 gap-2 mt-2">
+                             <div>
+                               <p className="text-xs text-muted-foreground"><span className="font-semibold">User:</span> {reservation.user_name}</p>
+                               <p className="text-xs text-muted-foreground"><span className="font-semibold">Drop:</span> {reservation.drop_time ? formatDate(reservation.drop_time) : 'N/A'}</p>
+                               <p className="text-xs text-muted-foreground"><span className="font-semibold">Duration:</span> {reservation.duration || 'N/A'}</p>
+                             </div>
+                             <div>
+                               <p className="text-xs text-muted-foreground"><span className="font-semibold">Flat:</span> {reservation.user_flatno || 'N/A'}</p>
+                               <p className="text-xs text-muted-foreground"><span className="font-semibold">Pickup:</span> {reservation.pickup_time ? formatDate(reservation.pickup_time) : 'N/A'}</p>
+                             </div>
+                           </div>
+                         </div>
+                       </div>
                     </Card>)}
                 </div>}
             </TabsContent>
