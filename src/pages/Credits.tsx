@@ -122,11 +122,16 @@ export default function Credits() {
             description: "Your payment is being processed. Status will update shortly.",
           });
         }, 1000);
+      } else {
+        // Always fetch payment history when component mounts to check for pending payments
+        if (userData?.id) {
+          fetchPaymentHistory();
+        }
       }
     };
 
     checkPaymentReturn();
-  }, [refreshAllData, fetchPaymentHistory, toast]);
+  }, [refreshAllData, fetchPaymentHistory, toast, userData?.id]);
 
   useEffect(() => {
     if (!isLoggedIn()) {
