@@ -58,7 +58,7 @@ interface NewUserForm {
 
 export default function SiteAdminDashboard() {
   const navigate = useNavigate();
-  const user = getUserData();
+  const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("pods");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -99,27 +99,33 @@ export default function SiteAdminDashboard() {
   } = useLocationDetection(user?.id, currentLocationId);
 
   useEffect(() => {
+    // Check authentication first
     if (!isLoggedIn()) {
       navigate('/login');
       return;
     }
-    if (user?.user_type !== 'SiteAdmin') {
+
+    // Then get user data
+    const userData = getUserData();
+    setUser(userData);
+
+    if (userData?.user_type !== 'SiteAdmin') {
       navigate('/login');
       return;
     }
 
     // Reset error state when loading new data
     setError(null);
-  }, [navigate, user]);
+  }, [navigate]);
 
   useEffect(() => {
-    if (currentLocationId) {
+    if (user && currentLocationId) {
       loadData();
     }
-  }, [currentLocationId, activeTab]);
+  }, [user, currentLocationId, activeTab]);
 
   const loadData = async () => {
-    if (!currentLocationId) return;
+    if (!currentLocationId || !user) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -304,21 +310,21 @@ export default function SiteAdminDashboard() {
     navigate(`/reservation-details/${reservation.id}`);
   };
 
-  const filteredPods = Array.isArray(pods) ? pods.filter(pod => 
-    pod.pod_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredPods = Array.isArray(pods) ? pods.filter(pod =>
+    pod.pod_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     pod.pod_status.toLowerCase().includes(searchQuery.toLowerCase())
   ) : [];
 
-  const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user => 
-    user.user_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    user.user_phone.includes(searchQuery) || 
-    user.user_email.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user =>
+    user.user_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.user_phone.includes(searchQuery) ||
+    user.user_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.user_flatno.toLowerCase().includes(searchQuery.toLowerCase())
   ) : [];
 
-  const filteredReservations = Array.isArray(reservations) ? reservations.filter(reservation => 
-    reservation.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    reservation.user_phone?.includes(searchQuery) || 
+  const filteredReservations = Array.isArray(reservations) ? reservations.filter(reservation =>
+    reservation.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    reservation.user_phone?.includes(searchQuery) ||
     reservation.awb_number?.toLowerCase().includes(searchQuery.toLowerCase())
   ) : [];
 
@@ -366,7 +372,13 @@ export default function SiteAdminDashboard() {
     );
   }
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background my-[16px]">
@@ -483,8 +495,8 @@ export default function SiteAdminDashboard() {
                             <p className="text-sm text-muted-foreground">Type: {pod.pod_type}</p>
                             <div className="flex items-center space-x-4 mt-1">
                               <span className={`text-xs font-medium ${
-                                pod.pod_status === 'available' ? 'text-green-600' : 
-                                pod.pod_status === 'occupied' ? 'text-orange-600' : 
+                                pod.pod_status === 'available' ? 'text-green-600' :
+                                pod.pod_status === 'occupied' ? 'text-orange-600' :
                                 'text-red-600'
                               }`}>
                                 {pod.pod_status.toUpperCase()}
@@ -512,8 +524,8 @@ export default function SiteAdminDashboard() {
               ) : (
                 <div className="space-y-3">
                   {currentItems.map((locationUser: LocationUser) => (
-                    <Card 
-                      key={locationUser.id} 
+                    <Card
+                      key={locationUser.id}
                       className="p-4 cursor-pointer hover:shadow-md transition-shadow"
                       onClick={() => handleUserCardClick(locationUser)}
                     >
@@ -561,8 +573,8 @@ export default function SiteAdminDashboard() {
               ) : (
                 <div className="space-y-4">
                   {currentItems.map((reservation: any) => (
-                    <Card 
-                      key={reservation.id} 
+                    <Card
+                      key={reservation.id}
                       className="p-4 cursor-pointer hover:shadow-md transition-shadow"
                       onClick={() => handleReservationCardClick(reservation)}
                     >
@@ -584,7 +596,7 @@ export default function SiteAdminDashboard() {
                         </div>
                         <div className="text-right">
                           <span className={`text-xs font-medium px-2 py-1 rounded ${
-                            reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : 
+                            reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' :
                             reservation.reservation_status === 'DropCompleted' ? 'bg-blue-100 text-blue-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
@@ -604,28 +616,18 @@ export default function SiteAdminDashboard() {
       {/* Pagination - only show when we have results */}
       {!isLoading && totalItems > 0 && (
         <div className="max-w-md mx-auto px-[14px] mt-4">
-          <PaginationFilter 
-            itemsPerPage={itemsPerPage} 
-            onItemsPerPageChange={setItemsPerPage} 
-            searchQuery="" 
-            onSearchChange={() => {}} 
-            currentPage={currentPage} 
-            totalPages={totalPages} 
-            onPageChange={setCurrentPage} 
-            totalItems={totalItems} 
-            placeholder="" 
+          <PaginationFilter
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={setItemsPerPage}
+            searchQuery=""
+            onSearchChange={() => {}}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            placeholder=""
           />
         </div>
-      )}
-
-      {/* Location Detection Popup */}
-      {showLocationPopup && (
-        <LocationDetectionPopup 
-          isOpen={showLocationPopup} 
-          onClose={closeLocationPopup} 
-          userId={user?.id || 0} 
-          locationId={currentLocationId || ""} 
-        />
       )}
 
       {/* Add User Dialog */}
