@@ -100,15 +100,43 @@ export default function Credits() {
     }
   }, []);
 
+  // Check if we're returning from a payment gateway
+  useEffect(() => {
+    const checkPaymentReturn = async () => {
+      const paymentRedirect = localStorage.getItem('payment_redirect');
+      const paymentId = localStorage.getItem('payment_id');
+
+      if (paymentRedirect === 'true' && paymentId) {
+        // We returned from a payment gateway, check the status
+        localStorage.removeItem('payment_redirect');
+        localStorage.removeItem('payment_id');
+
+        // Wait a moment for the backend to process the payment
+        setTimeout(async () => {
+          await refreshAllData();
+          await fetchPaymentHistory();
+
+          // Show success message
+          toast({
+            title: "Payment Status",
+            description: "Your payment is being processed. Status will update shortly.",
+          });
+        }, 1000);
+      }
+    };
+
+    checkPaymentReturn();
+  }, [refreshAllData, fetchPaymentHistory, toast]);
+
   useEffect(() => {
     if (!isLoggedIn()) {
       navigate('/login');
       return;
     }
-    
+
     // Initial data refresh
     refreshAllData();
-    
+
     // Set up periodic refresh for live data updates
     const refreshInterval = setInterval(refreshAllData, 10000); // Refresh every 10 seconds
 
@@ -116,7 +144,7 @@ export default function Credits() {
     const handleFocus = () => {
       refreshAllData();
     };
-    
+
     window.addEventListener('focus', handleFocus);
 
     return () => {
@@ -204,9 +232,9 @@ export default function Credits() {
           // Set payment redirect flag in localStorage for return detection
           localStorage.setItem('payment_redirect', 'true');
           localStorage.setItem('payment_id', data.id);
-          
-          // Force immediate redirect
-          window.location.replace(data.payment_url);
+
+          // Use window.location.href instead of replace for better compatibility
+          window.location.href = data.payment_url;
           return;
         }
       } else {
@@ -279,8 +307,8 @@ export default function Credits() {
                     onClick={() => setSelectedPaymentMethod(method.id)}
                   >
                     <div className="flex flex-col items-center space-y-2">
-                      <img 
-                        src={method.logo} 
+                      <img
+                        src={method.logo}
                         alt={method.name}
                         className="h-8 object-contain"
                       />
@@ -315,9 +343,13 @@ export default function Credits() {
                   <span className="text-sm text-orange-600">
                     ₹{pendingPayment.payment_amount} via {pendingPayment.payment_vendor}
                   </span>
-                  <Button 
+                  <Button
                     size="sm"
-                    onClick={() => window.location.href = pendingPayment.payment_url || ''}
+                    onClick={() => {
+                      localStorage.setItem('payment_redirect', 'true');
+                      localStorage.setItem('payment_id', pendingPayment.id);
+                      window.location.href = pendingPayment.payment_url || '';
+                    }}
                     className="bg-orange-600 hover:bg-orange-700"
                   >
                     Pay Now
