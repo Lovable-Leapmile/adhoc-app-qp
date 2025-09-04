@@ -15,7 +15,6 @@ import { apiService } from "@/services/api";
 import { toast } from "sonner";
 import { LocationDetectionPopup } from "@/components/LocationDetectionPopup";
 import { useLocationDetection } from "@/hooks/useLocationDetection";
-import { PageLayout } from "@/components/PageLayout";
 
 interface LocationUser {
   id: number;
@@ -358,337 +357,367 @@ export default function SiteAdminDashboard() {
   if (!user) return null;
 
   return (
-    <PageLayout pageTitle="Admin Dashboard" showBack={false}>
-      <div className="min-h-screen bg-background">
-        <div className="p-4 max-w-4xl mx-auto space-y-6">
-          {/* Header */}
-          <div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">
-              Admin Dashboard
-            </h1>
-          </div>
-
-          {/* Top Section - User Info */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="p-4">
-                <h3 className="font-semibold text-foreground mb-2">User Information</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    <span>{user?.user_name || 'N/A'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span>{user?.user_phone || 'N/A'}</span>
-                  </div>
-                </div>
-              </Card>
-              <Card className="p-4">
-                <h3 className="font-semibold text-foreground mb-2">Access Codes</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Drop Code</p>
-                    <p className="font-semibold">{user?.user_dropcode || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Passcode</p>
-                    <p className="font-semibold">{user?.user_pickupcode || 'N/A'}</p>
-                  </div>
-                </div>
-              </Card>
+    <div className="min-h-screen bg-background my-[16px]">
+      {/* User Information Cards */}
+      <div className="max-w-md mx-auto px-[14px] mb-6">
+        {/* User Name and Phone Number */}
+        <Card className="p-4 mb-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-muted-foreground" />
+              <span className="font-semibold text-foreground">{user?.user_name || 'N/A'}</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="p-4">
-                <h3 className="font-semibold text-foreground mb-2">Credits</h3>
-                <p className="text-2xl font-bold text-green-600">
-                  {user?.user_credit_limit ? Number(user.user_credit_limit) - Number(user.user_credit_used || 0) : 0}
-                </p>
-              </Card>
-              <div className="flex items-end">
-                <Button onClick={() => setShowAddUserDialog(true)} className="flex items-center gap-2">
-                  <UserPlus className="w-4 h-4" />
-                  Add User
-                </Button>
-              </div>
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-muted-foreground" />
+              <span className="text-foreground">{user?.user_phone || 'N/A'}</span>
             </div>
           </div>
+        </Card>
 
-          {/* Error Display */}
-          {error && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5" />
-                <span>{error}</span>
-              </div>
-              <Button variant="outline" size="sm" className="mt-2" onClick={loadData}>
-                Retry
-              </Button>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <Card className="p-4 text-center">
+            <p className="text-sm text-muted-foreground mb-1">Drop Code</p>
+            <p className="text-lg font-semibold text-foreground">
+              {user?.user_dropcode || 'N/A'}
+            </p>
+          </Card>
+          <Card className="p-4 text-center">
+            <p className="text-sm text-muted-foreground mb-1">Passcode</p>
+            <p className="text-lg font-semibold text-foreground">
+              {user?.user_pickupcode || 'N/A'}
+            </p>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <Card className="p-4 text-center">
+            <p className="text-sm text-muted-foreground mb-1">Available Credits</p>
+            <p className="text-lg font-semibold text-green-600">
+              {user?.user_credit_limit ? Number(user.user_credit_limit) - Number(user.user_credit_used || 0) : 0}
+            </p>
+          </Card>
+          <Card className="p-4 text-center flex items-center justify-center">
+            <Button onClick={() => setShowAddUserDialog(true)} size="sm" className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              Add User
+            </Button>
+          </Card>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="max-w-md mx-auto px-[14px]">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive mb-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              <span className="text-sm">{error}</span>
             </div>
-          )}
+            <Button variant="outline" size="sm" className="mt-2" onClick={loadData}>
+              Retry
+            </Button>
+          </div>
+        )}
 
-          {/* Loading State */}
-          {isLoading && (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          )}
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
 
-          {/* Tabs */}
-          {!isLoading && (
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="pods" className="flex items-center gap-2">
-                  <Zap className="w-4 h-4" />
-                  Pods
-                </TabsTrigger>
-                <TabsTrigger value="users" className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Users
-                </TabsTrigger>
-                <TabsTrigger value="history" className="flex items-center gap-2">
-                  <History className="w-4 h-4" />
-                  History
-                </TabsTrigger>
-              </TabsList>
+        {!isLoading && (
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="pods">Pods</TabsTrigger>
+              <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
 
-              {/* Pagination Filter */}
-              <div className="mt-4">
-                <PaginationFilter 
-                  itemsPerPage={itemsPerPage} 
-                  onItemsPerPageChange={setItemsPerPage} 
-                  searchQuery={searchQuery} 
-                  onSearchChange={setSearchQuery} 
-                  currentPage={currentPage} 
-                  totalPages={totalPages} 
-                  onPageChange={setCurrentPage} 
-                  totalItems={totalItems} 
-                  placeholder={`Search ${activeTab}...`} 
+            {/* Search */}
+            <div className="mt-4 mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={`Search ${activeTab}...`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
                 />
               </div>
+            </div>
 
-              {/* Pods Tab */}
-              <TabsContent value="pods" className="space-y-4">
-                {currentItems.length === 0 ? (
-                  <div className="text-center py-20">
-                    <Zap className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                    <p className="text-muted-foreground">
-                      {searchQuery ? "No pods found matching your search." : "No pods found for this location."}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {currentItems.map((pod: Pod) => (
-                      <Card key={pod.id} className="p-4">
+            <TabsContent value="pods" className="space-y-4 mt-6">
+              {currentItems.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Zap className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">No Pods</p>
+                  <p className="text-sm">
+                    {searchQuery ? "No pods found matching your search." : "No pods found for this location."}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {currentItems.map((pod: Pod) => (
+                    <Card key={pod.id} className="p-4">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                             <Zap className="w-5 h-5 text-primary" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-semibold text-foreground">{pod.pod_name}</h3>
-                            <div className="space-y-1 text-sm text-muted-foreground">
-                              <p>Status: <span className={`font-medium ${
+                            <h3 className="font-medium text-foreground">{pod.pod_name}</h3>
+                            <p className="text-sm text-muted-foreground">Type: {pod.pod_type}</p>
+                            <div className="flex items-center space-x-4 mt-1">
+                              <span className={`text-xs font-medium ${
                                 pod.pod_status === 'available' ? 'text-green-600' : 
                                 pod.pod_status === 'occupied' ? 'text-orange-600' : 
                                 'text-red-600'
-                              }`}>{pod.pod_status}</span></p>
-                              <p>Type: {pod.pod_type || 'N/A'}</p>
-                              <p className="text-xs">{formatDate(pod.created_at)}</p>
+                              }`}>
+                                {pod.pod_status.toUpperCase()}
+                              </span>
+                              <span className="text-xs text-muted-foreground">{formatDate(pod.created_at)}</span>
                             </div>
                           </div>
                         </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
-              {/* Users Tab */}
-              <TabsContent value="users" className="space-y-4">
-                {currentItems.length === 0 ? (
-                  <div className="text-center py-20">
-                    <User className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                    <p className="text-muted-foreground">
-                      {searchQuery ? "No users found matching your search." : "No users found for this location."}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {currentItems.map((locationUser: LocationUser) => (
-                      <Card key={locationUser.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleUserCardClick(locationUser)}>
-                        <div className="flex justify-between items-start gap-2">
-                          <div className="flex items-center space-x-3 flex-1 min-w-0">
-                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                              <User className="w-5 h-5 text-primary" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-foreground truncate">{locationUser.user_name}</h3>
-                              <div className="space-y-1 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Mail className="w-3 h-3 shrink-0" />
-                                  <span className="truncate">{locationUser.user_email || "No email"}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Phone className="w-3 h-3 shrink-0" />
-                                  <span className="truncate">{locationUser.user_phone}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Home className="w-3 h-3 shrink-0" />
-                                  <span className="truncate">{locationUser.user_flatno || "No flat number"}</span>
-                                </div>
-                              </div>
+            <TabsContent value="users" className="space-y-4 mt-6">
+              {currentItems.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">No Users</p>
+                  <p className="text-sm">
+                    {searchQuery ? "No users found matching your search." : "No users found for this location."}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {currentItems.map((locationUser: LocationUser) => (
+                    <Card 
+                      key={locationUser.id} 
+                      className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => handleUserCardClick(locationUser)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 flex-1">
+                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-foreground">{locationUser.user_name}</h3>
+                            <p className="text-sm text-muted-foreground">{locationUser.user_phone}</p>
+                            <div className="flex items-center space-x-4 mt-1">
+                              <span className="text-xs text-muted-foreground truncate">{locationUser.user_email}</span>
+                              <span className="text-xs text-muted-foreground">{locationUser.user_flatno}</span>
                             </div>
                           </div>
                         </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openRemoveUserDialog(locationUser);
+                          }}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
-              {/* History Tab */}
-              <TabsContent value="history" className="space-y-4">
-                {currentItems.length === 0 ? (
-                  <div className="text-center py-20">
-                    <Clock className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                    <p className="text-muted-foreground">
-                      {searchQuery ? "No history found matching your search." : "No reservation history found."}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {currentItems.map((reservation: any) => (
-                      <Card key={reservation.id} className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                              <Package className="w-5 h-5 text-primary" />
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-medium text-foreground">
-                                {reservation.created_by_name || reservation.user_name || 'Unknown User'}
-                              </h3>
-                              <p className="text-sm text-muted-foreground">
-                                {reservation.reservation_awbno || reservation.awb_number || 'No AWB'}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Pod: {reservation.pod_name || 'N/A'} • {formatDate(reservation.created_at)}
-                              </p>
-                            </div>
+            <TabsContent value="history" className="space-y-4 mt-6">
+              {currentItems.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">No History</p>
+                  <p className="text-sm">
+                    {searchQuery ? "No reservations found matching your search." : "Your reservation history will appear here"}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {currentItems.map((reservation: any) => (
+                    <Card 
+                      key={reservation.id} 
+                      className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => handleReservationCardClick(reservation)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                            <Package className="w-5 h-5 text-primary" />
                           </div>
-                          <div className="text-right">
-                            <span className={`text-xs font-medium px-2 py-1 rounded ${
-                              reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' :
-                              reservation.reservation_status === 'DropPending' ? 'bg-orange-100 text-orange-800' :
-                              reservation.reservation_status === 'PickupPending' ? 'bg-blue-100 text-blue-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {reservation.reservation_status}
-                            </span>
+                          <div className="flex-1">
+                            <h3 className="font-medium text-foreground">{reservation.created_by_name || reservation.user_name}</h3>
+                            <p className="text-sm text-muted-foreground">{reservation.user_phone}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {reservation.reservation_awbno || reservation.awb_number || 'No AWB'} • {reservation.pod_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(reservation.created_at)}
+                            </p>
                           </div>
                         </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          )}
+                        <div className="text-right">
+                          <span className={`text-xs font-medium px-2 py-1 rounded ${
+                            reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : 
+                            reservation.reservation_status === 'DropCompleted' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {reservation.reservation_status}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        )}
+      </div>
+
+      {/* Pagination - only show when we have results */}
+      {!isLoading && totalItems > 0 && (
+        <div className="max-w-md mx-auto px-[14px] mt-4">
+          <PaginationFilter 
+            itemsPerPage={itemsPerPage} 
+            onItemsPerPageChange={setItemsPerPage} 
+            searchQuery="" 
+            onSearchChange={() => {}} 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={setCurrentPage} 
+            totalItems={totalItems} 
+            placeholder="" 
+          />
         </div>
+      )}
 
-        {/* Add User Dialog */}
-        <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-          <DialogContent className="max-w-md mx-auto">
-            <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
-              <DialogDescription>
-                Fill in the details to add a new user to this location.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4">
-              <div>
-                <Label htmlFor="user_name">Full Name *</Label>
-                <Input
-                  id="user_name"
-                  value={newUserForm.user_name}
-                  onChange={(e) => setNewUserForm(prev => ({ ...prev, user_name: e.target.value }))}
-                  placeholder="Enter full name"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="user_phone">Phone Number *</Label>
-                <Input
-                  id="user_phone"
-                  type="tel"
-                  value={newUserForm.user_phone}
-                  onChange={(e) => setNewUserForm(prev => ({ ...prev, user_phone: e.target.value }))}
-                  placeholder="Enter phone number"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="user_email">Email Address</Label>
-                <Input
-                  id="user_email"
-                  type="email"
-                  value={newUserForm.user_email}
-                  onChange={(e) => setNewUserForm(prev => ({ ...prev, user_email: e.target.value }))}
-                  placeholder="Enter email address"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="user_flatno">Flat/Unit Number</Label>
-                <Input
-                  id="user_flatno"
-                  value={newUserForm.user_flatno}
-                  onChange={(e) => setNewUserForm(prev => ({ ...prev, user_flatno: e.target.value }))}
-                  placeholder="Enter flat/unit number"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="user_address">Address</Label>
-                <Textarea
-                  id="user_address"
-                  value={newUserForm.user_address}
-                  onChange={(e) => setNewUserForm(prev => ({ ...prev, user_address: e.target.value }))}
-                  placeholder="Enter full address"
-                  rows={3}
-                />
-              </div>
+      {/* Location Detection Popup */}
+      <LocationDetectionPopup 
+        isOpen={showLocationPopup} 
+        onClose={closeLocationPopup} 
+        userId={user?.id || 0} 
+        locationId={currentLocationId || ""} 
+      />
+
+      {/* Add User Dialog */}
+      <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+        <DialogContent className="max-w-md mx-auto">
+          <DialogHeader>
+            <DialogTitle>Add New User</DialogTitle>
+            <DialogDescription>
+              Fill in the details to add a new user to this location.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4">
+            <div>
+              <Label htmlFor="user_name">Full Name *</Label>
+              <Input
+                id="user_name"
+                value={newUserForm.user_name}
+                onChange={(e) => setNewUserForm(prev => ({ ...prev, user_name: e.target.value }))}
+                placeholder="Enter full name"
+                required
+              />
             </div>
             
-            <DialogFooter className="flex space-x-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowAddUserDialog(false)}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleAddUser}
-                disabled={isLoading || !newUserForm.user_name || !newUserForm.user_phone}
-              >
-                {isLoading ? 'Adding...' : 'Add User'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            <div>
+              <Label htmlFor="user_phone">Phone Number *</Label>
+              <Input
+                id="user_phone"
+                type="tel"
+                value={newUserForm.user_phone}
+                onChange={(e) => setNewUserForm(prev => ({ ...prev, user_phone: e.target.value }))}
+                placeholder="Enter phone number"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="user_email">Email Address</Label>
+              <Input
+                id="user_email"
+                type="email"
+                value={newUserForm.user_email}
+                onChange={(e) => setNewUserForm(prev => ({ ...prev, user_email: e.target.value }))}
+                placeholder="Enter email address"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="user_flatno">Flat/Unit Number</Label>
+              <Input
+                id="user_flatno"
+                value={newUserForm.user_flatno}
+                onChange={(e) => setNewUserForm(prev => ({ ...prev, user_flatno: e.target.value }))}
+                placeholder="Enter flat/unit number"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="user_address">Address</Label>
+              <Textarea
+                id="user_address"
+                value={newUserForm.user_address}
+                onChange={(e) => setNewUserForm(prev => ({ ...prev, user_address: e.target.value }))}
+                placeholder="Enter full address"
+                rows={3}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowAddUserDialog(false)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddUser}
+              disabled={isLoading || !newUserForm.user_name || !newUserForm.user_phone}
+            >
+              {isLoading ? 'Adding...' : 'Add User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {/* Location Detection Popup */}
-        <LocationDetectionPopup 
-          isOpen={showLocationPopup} 
-          onClose={closeLocationPopup} 
-          userId={user?.id || 0} 
-          locationId={currentLocationId || ""} 
-        />
-      </div>
-    </PageLayout>
+      {/* Remove User Confirmation Dialog */}
+      <Dialog open={showRemoveUserDialog} onOpenChange={setShowRemoveUserDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove {userToRemove?.user_name}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRemoveUserDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleRemoveUser} disabled={isLoading}>
+              {isLoading ? 'Removing...' : 'Remove User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
