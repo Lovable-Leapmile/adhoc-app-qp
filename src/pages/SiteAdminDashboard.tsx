@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, UserPlus, Plus, User, Phone, Mail, Home, Trash2, Package, AlertCircle, Zap, Users, History, Clock } from "lucide-react";
+import { Search, UserPlus, Plus, User, Phone, Mail, Home, Trash2, Package, AlertCircle, Zap, Users, History, Clock, Edit, ChevronRight } from "lucide-react";
 import { PaginationFilter } from "@/components/PaginationFilter";
 import { getUserData, isLoggedIn } from "@/utils/storage";
 import { apiService } from "@/services/api";
@@ -73,6 +73,13 @@ export default function SiteAdminDashboard() {
   const [showRemoveUserDialog, setShowRemoveUserDialog] = useState(false);
   const [userToRemove, setUserToRemove] = useState<LocationUser | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showEditUserDialog, setShowEditUserDialog] = useState(false);
+  const [editingUser, setEditingUser] = useState<LocationUser | null>(null);
+  const [editUserForm, setEditUserForm] = useState({
+    user_flatno: '',
+    user_address: '',
+    user_email: ''
+  });
 
   // Pagination state
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -270,7 +277,30 @@ export default function SiteAdminDashboard() {
     }
   };
   const handleUserCardClick = (clickedUser: LocationUser) => {
-    navigate(`/profile?user_id=${clickedUser.user_id}&admin_view=true`);
+    setEditingUser(clickedUser);
+    setEditUserForm({
+      user_flatno: clickedUser.user_flatno || '',
+      user_address: clickedUser.user_address || '',
+      user_email: clickedUser.user_email || ''
+    });
+    setShowEditUserDialog(true);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!editingUser) return;
+    setIsLoading(true);
+    try {
+      await apiService.updateUser(editingUser.user_id, editUserForm);
+      toast.success("User updated successfully!");
+      setShowEditUserDialog(false);
+      setEditingUser(null);
+      await loadLocationUsers();
+    } catch (error: any) {
+      console.error("Error updating user:", error);
+      toast.error(error?.message || "Failed to update user");
+    } finally {
+      setIsLoading(false);
+    }
   };
   const handleReservationCardClick = (reservation: Reservation) => {
     navigate(`/reservation-details/${reservation.id}`);
@@ -423,7 +453,7 @@ export default function SiteAdminDashboard() {
                             <div className="flex items-center space-x-4 mt-1">
                               
                               <span className="text-xs text-muted-foreground">
-                                {pod.pod_numtotaldoors || 0} doors
+                                Total Doors: {pod.pod_numtotaldoors || 0}
                               </span>
                             </div>
                           </div>
@@ -444,7 +474,7 @@ export default function SiteAdminDashboard() {
                     {searchQuery ? "No users found matching your search." : "No users found for this location."}
                   </p>
                 </div> : <div className="space-y-3">
-                  {currentItems.map((locationUser: LocationUser) => <Card key={locationUser.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleUserCardClick(locationUser)}>
+                  {currentItems.map((locationUser: LocationUser) => <Card key={locationUser.id} className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -454,17 +484,18 @@ export default function SiteAdminDashboard() {
                             <h3 className="font-medium text-foreground">{locationUser.user_name}</h3>
                             <p className="text-sm text-muted-foreground">{locationUser.user_phone}</p>
                             <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-xs text-muted-foreground truncate">{locationUser.user_email}</span>
-                              <span className="text-xs text-muted-foreground">{locationUser.user_flatno}</span>
+                              <span className="text-xs text-muted-foreground">Flat: {locationUser.user_flatno}</span>
+                              <span className="text-xs text-muted-foreground truncate">{locationUser.user_address}</span>
                             </div>
+                            <p className="text-xs text-muted-foreground">{locationUser.user_type}</p>
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm" onClick={e => {
-                  e.stopPropagation();
-                  openRemoveUserDialog(locationUser);
-                }} className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                         <div className="flex flex-col items-center">
+                           <Button variant="ghost" size="sm" onClick={() => handleUserCardClick(locationUser)} className="text-muted-foreground hover:text-foreground">
+                             <Edit className="w-4 h-4" />
+                           </Button>
+                           <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                         </div>
                       </div>
                     </Card>)}
                 </div>}
@@ -478,27 +509,30 @@ export default function SiteAdminDashboard() {
                     {searchQuery ? "No reservations found matching your search." : "Your reservation history will appear here"}
                   </p>
                 </div> : <div className="space-y-4">
-                  {currentItems.map((reservation: any) => <Card key={reservation.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleReservationCardClick(reservation)}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                            <Package className="w-5 h-5 text-primary" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium text-foreground">{reservation.created_by_name || reservation.user_name}</h3>
-                            <p className="text-sm text-muted-foreground">{reservation.user_phone}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {reservation.reservation_awbno || reservation.awb_number || 'No AWB'} • {reservation.pod_name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatDate(reservation.created_at)}
-                            </p>
-                          </div>
+                  {currentItems.map((reservation: any) => <Card key={reservation.id} className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                          <Package className="w-5 h-5 text-primary" />
                         </div>
-                        <div className="text-right">
-                          <span className={`text-xs font-medium px-2 py-1 rounded ${reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : reservation.reservation_status === 'DropCompleted' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {reservation.reservation_status}
-                          </span>
+                        <div className="flex-1">
+                          <h3 className="font-medium text-foreground">{reservation.pod_name || 'N/A'}</h3>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className={`text-xs font-medium px-2 py-1 rounded ${reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : reservation.reservation_status === 'DropCompleted' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                              {reservation.reservation_status}
+                            </span>
+                            <span className="text-xs text-muted-foreground">Door: {reservation.door_number || 'N/A'}</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            <div>
+                              <p className="text-xs text-muted-foreground">User: {reservation.user_name}</p>
+                              <p className="text-xs text-muted-foreground">Drop: {reservation.drop_time ? formatDate(reservation.drop_time) : 'N/A'}</p>
+                              <p className="text-xs text-muted-foreground">Duration: {reservation.duration || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Flat: {reservation.user_flatno || 'N/A'}</p>
+                              <p className="text-xs text-muted-foreground">Pickup: {reservation.pickup_time ? formatDate(reservation.pickup_time) : 'N/A'}</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </Card>)}
@@ -570,6 +604,70 @@ export default function SiteAdminDashboard() {
             </Button>
             <Button onClick={handleAddUser} disabled={isLoading || !newUserForm.user_name || !newUserForm.user_phone}>
               {isLoading ? 'Adding...' : 'Add User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
+        <DialogContent className="max-w-md mx-auto">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user information for {editingUser?.user_name}.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4">
+            <div>
+              <Label htmlFor="edit_user_flatno">Flat/Unit Number</Label>
+              <Input 
+                id="edit_user_flatno" 
+                value={editUserForm.user_flatno} 
+                onChange={e => setEditUserForm(prev => ({
+                  ...prev,
+                  user_flatno: e.target.value
+                }))} 
+                placeholder="Enter flat/unit number" 
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="edit_user_address">Address</Label>
+              <Textarea 
+                id="edit_user_address" 
+                value={editUserForm.user_address} 
+                onChange={e => setEditUserForm(prev => ({
+                  ...prev,
+                  user_address: e.target.value
+                }))} 
+                placeholder="Enter full address" 
+                rows={3} 
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="edit_user_email">Email Address</Label>
+              <Input 
+                id="edit_user_email" 
+                type="email" 
+                value={editUserForm.user_email} 
+                onChange={e => setEditUserForm(prev => ({
+                  ...prev,
+                  user_email: e.target.value
+                }))} 
+                placeholder="Enter email address" 
+              />
+            </div>
+          </div>
+          
+          <DialogFooter className="flex space-x-2">
+            <Button variant="outline" onClick={() => setShowEditUserDialog(false)} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateUser} disabled={isLoading}>
+              {isLoading ? 'Updating...' : 'Update User'}
             </Button>
           </DialogFooter>
         </DialogContent>

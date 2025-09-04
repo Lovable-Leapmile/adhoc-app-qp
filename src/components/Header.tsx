@@ -81,14 +81,6 @@ export function Header({
                           Profile
                         </Button>
                       </SheetClose>
-                      {user?.user_type !== 'SiteSecurity' && user?.user_type !== 'Customer' && user?.user_type !== 'User' && (
-                        <SheetClose asChild>
-                          <Button variant="ghost" className="w-full justify-start h-12 px-4 rounded-none" onClick={() => navigate('/rto')}>
-                            <Package className="mr-3 h-4 w-4" />
-                            RTO Management
-                          </Button>
-                        </SheetClose>
-                      )}
                       {(user?.user_type === 'Customer' || user?.user_type === 'User' || user?.user_type === 'SiteAdmin') && (
                         <SheetClose asChild>
                           <Button variant="ghost" className="w-full justify-start h-12 px-4 rounded-none" onClick={() => navigate('/credits')}>
