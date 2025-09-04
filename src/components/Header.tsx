@@ -31,7 +31,7 @@ export function Header({
     if (!userType) return "";
     if (userType === 'Customer') return 'User';
     if (userType === 'SiteSecurity') return 'Site Security';
-    if (userType === 'SiteAdmin') return 'Site Admin';
+    if (userType === 'SiteAdmin') return 'Admin';
     return userType;
   }, [user]);
   const handleLogout = () => {
@@ -89,7 +89,7 @@ export function Header({
                           </Button>
                         </SheetClose>
                       )}
-                      {(user?.user_type === 'Customer' || user?.user_type === 'User') && (
+                      {(user?.user_type === 'Customer' || user?.user_type === 'User' || user?.user_type === 'SiteAdmin') && (
                         <SheetClose asChild>
                           <Button variant="ghost" className="w-full justify-start h-12 px-4 rounded-none" onClick={() => navigate('/credits')}>
                             <CreditCard className="mr-3 h-4 w-4" />

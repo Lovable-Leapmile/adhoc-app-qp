@@ -8,13 +8,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, UserPlus, Plus, User, Phone, Mail, Home, Trash2, Package, AlertCircle } from "lucide-react";
+import { Search, UserPlus, Plus, User, Phone, Mail, Home, Trash2, Package, AlertCircle, Zap, Users, History, Clock } from "lucide-react";
 import { PaginationFilter } from "@/components/PaginationFilter";
 import { getUserData, isLoggedIn } from "@/utils/storage";
 import { apiService } from "@/services/api";
 import { toast } from "sonner";
 import { LocationDetectionPopup } from "@/components/LocationDetectionPopup";
 import { useLocationDetection } from "@/hooks/useLocationDetection";
+import { PageLayout } from "@/components/PageLayout";
+
 interface LocationUser {
   id: number;
   user_id: number;
@@ -25,6 +27,16 @@ interface LocationUser {
   user_address: string;
   user_type: string;
 }
+
+interface Pod {
+  id: string;
+  pod_name: string;
+  pod_status: string;
+  pod_type: string;
+  location_id: string;
+  created_at: string;
+}
+
 interface Reservation {
   id: string;
   user_name: string;
@@ -36,6 +48,7 @@ interface Reservation {
   pod_name?: string;
   location_name?: string;
 }
+
 interface NewUserForm {
   user_name: string;
   user_email: string;
@@ -43,10 +56,11 @@ interface NewUserForm {
   user_address: string;
   user_flatno: string;
 }
+
 export default function SiteAdminDashboard() {
   const navigate = useNavigate();
   const user = getUserData();
-  const [activeTab, setActiveTab] = useState("users");
+  const [activeTab, setActiveTab] = useState("pods");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Dialogs state
@@ -57,10 +71,9 @@ export default function SiteAdminDashboard() {
 
   // Data state
   const [locationUsers, setLocationUsers] = useState<LocationUser[]>([]);
+  const [pods, setPods] = useState<Pod[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [selectedUser, setSelectedUser] = useState<LocationUser | null>(null);
-  const [reservationSubTab, setReservationSubTab] = useState("pickup-pending");
-  const [historySubTab, setHistorySubTab] = useState("drop-cancelled");
   const [isLoading, setIsLoading] = useState(false);
   const [showRemoveUserDialog, setShowRemoveUserDialog] = useState(false);
   const [userToRemove, setUserToRemove] = useState<LocationUser | null>(null);
@@ -85,6 +98,7 @@ export default function SiteAdminDashboard() {
     showLocationPopup,
     closeLocationPopup
   } = useLocationDetection(user?.id, currentLocationId);
+
   useEffect(() => {
     if (!isLoggedIn()) {
       navigate('/login');
@@ -98,20 +112,22 @@ export default function SiteAdminDashboard() {
     // Reset error state when loading new data
     setError(null);
   }, [navigate, user]);
+
   useEffect(() => {
     if (currentLocationId) {
       loadData();
     }
-  }, [currentLocationId, activeTab, reservationSubTab, historySubTab]);
+  }, [currentLocationId, activeTab]);
+
   const loadData = async () => {
     if (!currentLocationId) return;
     setIsLoading(true);
     setError(null);
     try {
-      if (activeTab === "users") {
+      if (activeTab === "pods") {
+        await loadPods();
+      } else if (activeTab === "users") {
         await loadLocationUsers();
-      } else if (activeTab === "reservations") {
-        await loadReservations();
       } else if (activeTab === "history") {
         await loadHistory();
       }
@@ -123,16 +139,59 @@ export default function SiteAdminDashboard() {
       setIsLoading(false);
     }
   };
+
+  const loadPods = async () => {
+    try {
+      const authToken = localStorage.getItem('auth_token');
+      const response = await fetch(
+        `https://stagingv3.leapmile.com/podcore/pods/?location_id=${currentLocationId}&pod_mode=adhoc`,
+        {
+          method: 'GET',
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch pods');
+      }
+
+      const data = await response.json();
+      const podsData = data.records || [];
+      setPods(podsData);
+    } catch (error) {
+      console.error("Error loading pods:", error);
+      setError("Failed to load pods");
+      toast.error("Failed to load pods");
+      setPods([]);
+    }
+  };
+
   const loadLocationUsers = async () => {
     try {
-      const users = await apiService.getLocationUsers(currentLocationId!);
-      if (users && Array.isArray(users)) {
-        setLocationUsers(users);
-      } else {
-        console.warn("Unexpected API response format for users:", users);
-        setLocationUsers([]);
-        setError("Received unexpected data format from server");
+      const authToken = localStorage.getItem('auth_token');
+      const response = await fetch(
+        `https://stagingv3.leapmile.com/podcore/users/locations/?location_id=${currentLocationId}`,
+        {
+          method: 'GET',
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
       }
+
+      const data = await response.json();
+      const usersData = data.records || [];
+      // Filter to show only customers
+      const customers = usersData.filter((user: any) => user.user_type === "User" || user.user_type === "Customer");
+      setLocationUsers(customers);
     } catch (error) {
       console.error("Error loading users:", error);
       setError("Failed to load users");
@@ -140,55 +199,30 @@ export default function SiteAdminDashboard() {
       setLocationUsers([]);
     }
   };
-  const loadReservations = async () => {
-    try {
-      const status = reservationSubTab === "pickup-pending" ? "PickupPending" : "DropPending";
-      console.log("Fetching reservations with status:", status);
-      const reservationList = await apiService.getLocationReservations(currentLocationId!, status);
-      console.log("API Response:", reservationList);
-      if (reservationList && Array.isArray(reservationList)) {
-        // Map the data to ensure proper field names
-        const mappedReservations = reservationList.map(reservation => ({
-          ...reservation,
-          user_name: reservation.user_name || reservation.created_by_name || "Unknown User",
-          awb_number: reservation.awb_number || reservation.reservation_awbno || "N/A",
-          user_phone: reservation.user_phone || reservation.created_by_phone || "N/A"
-        }));
-        setReservations(mappedReservations);
-        setError(null);
-      } else {
-        console.warn("Unexpected API response format for reservations:", reservationList);
-        setReservations([]);
-        setError("Received unexpected data format from server");
-      }
-    } catch (error) {
-      console.error("Error loading reservations:", error);
-      setError("Failed to load reservations");
-      toast.error("Failed to load reservations");
-      setReservations([]);
-    }
-  };
+
   const loadHistory = async () => {
     try {
-      const status = historySubTab === "drop-cancelled" ? "DropCancelled" : "PickupCompleted";
-      console.log("Fetching history with status:", status);
-      const historyList = await apiService.getLocationReservations(currentLocationId!, status);
-      console.log("API Response:", historyList);
-      if (historyList && Array.isArray(historyList)) {
-        // Map the data to ensure proper field names
-        const mappedHistory = historyList.map(reservation => ({
-          ...reservation,
-          user_name: reservation.user_name || reservation.created_by_name || "Unknown User",
-          awb_number: reservation.awb_number || reservation.reservation_awbno || "N/A",
-          user_phone: reservation.user_phone || reservation.created_by_phone || "N/A"
-        }));
-        setReservations(mappedHistory);
-        setError(null);
-      } else {
-        console.warn("Unexpected API response format for history:", historyList);
-        setReservations([]);
-        setError("Received unexpected data format from server");
+      const authToken = localStorage.getItem('auth_token');
+      const response = await fetch(
+        `https://stagingv3.leapmile.com/podcore/adhoc/reservations/?location_id=${currentLocationId}`,
+        {
+          method: 'GET',
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch history');
       }
+
+      const data = await response.json();
+      const historyData = data.records || [];
+      // Sort by created_at desc (newer entries at the top)
+      historyData.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setReservations(historyData);
     } catch (error) {
       console.error("Error loading history:", error);
       setError("Failed to load history");
@@ -196,6 +230,7 @@ export default function SiteAdminDashboard() {
       setReservations([]);
     }
   };
+
   const handleAddUser = async () => {
     setIsLoading(true);
     try {
@@ -219,6 +254,7 @@ export default function SiteAdminDashboard() {
       setIsLoading(false);
     }
   };
+
   const handleRemoveUser = async () => {
     if (!userToRemove) return;
     setIsLoading(true);
@@ -235,15 +271,18 @@ export default function SiteAdminDashboard() {
       setIsLoading(false);
     }
   };
+
   const openRemoveUserDialog = (user: LocationUser) => {
     setUserToRemove(user);
     setShowRemoveUserDialog(true);
   };
+
   const handleSelectUserForReservation = (selectedUser: LocationUser) => {
     setSelectedUser(selectedUser);
     setShowUserSelectionDialog(false);
     setShowConfirmUserDialog(true);
   };
+
   const handleOpenUserSelectionDialog = async () => {
     setShowUserSelectionDialog(true);
     // Load users when opening the dialog
@@ -251,388 +290,405 @@ export default function SiteAdminDashboard() {
       await loadLocationUsers();
     }
   };
+
   const handleConfirmUserForReservation = () => {
     if (selectedUser && currentLocationId) {
       navigate(`/reservation?user_id=${selectedUser.user_id}&location_id=${currentLocationId}`);
     }
   };
+
   const handleUserCardClick = (clickedUser: LocationUser) => {
     navigate(`/profile?user_id=${clickedUser.user_id}&admin_view=true`);
   };
+
   const handleReservationCardClick = (reservation: Reservation) => {
     navigate(`/reservation-details/${reservation.id}`);
   };
-  const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user => user.user_type === "User" && (user.user_name.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_phone.includes(searchQuery) || user.user_email.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_flatno.toLowerCase().includes(searchQuery.toLowerCase()))) : [];
-  const filteredReservations = Array.isArray(reservations) ? reservations.filter(reservation => reservation.user_name.toLowerCase().includes(searchQuery.toLowerCase()) || reservation.user_phone.includes(searchQuery) || reservation.awb_number.toLowerCase().includes(searchQuery.toLowerCase())) : [];
 
-  // Pagination calculations for users
-  const totalUsers = filteredUsers.length;
-  const totalUserPages = Math.ceil(totalUsers / itemsPerPage);
-  const userStartIndex = (currentPage - 1) * itemsPerPage;
-  const userEndIndex = userStartIndex + itemsPerPage;
-  const currentUsers = filteredUsers.slice(userStartIndex, userEndIndex);
+  const filteredPods = Array.isArray(pods) ? pods.filter(pod => 
+    pod.pod_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    pod.pod_status.toLowerCase().includes(searchQuery.toLowerCase())
+  ) : [];
 
-  // Pagination calculations for reservations
-  const totalReservations = filteredReservations.length;
-  const totalReservationPages = Math.ceil(totalReservations / itemsPerPage);
-  const reservationStartIndex = (currentPage - 1) * itemsPerPage;
-  const reservationEndIndex = reservationStartIndex + itemsPerPage;
-  const currentReservations = filteredReservations.slice(reservationStartIndex, reservationEndIndex);
+  const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user => 
+    user.user_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    user.user_phone.includes(searchQuery) || 
+    user.user_email.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    user.user_flatno.toLowerCase().includes(searchQuery.toLowerCase())
+  ) : [];
+
+  const filteredReservations = Array.isArray(reservations) ? reservations.filter(reservation => 
+    reservation.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    reservation.user_phone?.includes(searchQuery) || 
+    reservation.awb_number?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) : [];
+
+  // Get current items for pagination
+  const getCurrentItems = () => {
+    let items: any[] = [];
+    if (activeTab === "pods") items = filteredPods;
+    else if (activeTab === "users") items = filteredUsers;
+    else if (activeTab === "history") items = filteredReservations;
+
+    const totalItems = items.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentItems = items.slice(startIndex, endIndex);
+
+    return { currentItems, totalItems, totalPages };
+  };
+
+  const { currentItems, totalItems, totalPages } = getCurrentItems();
+
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   if (!user) return null;
-  return <div className="min-h-screen bg-background">
-      <div className="p-4 max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            Site Admin Dashboard
-          </h1>
-          
-        </div>
 
-        {/* Error Display */}
-        {error && <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              <span>{error}</span>
-            </div>
-            <Button variant="outline" size="sm" className="mt-2" onClick={loadData}>
-              Retry
-            </Button>
-          </div>}
-
-        {/* Loading State */}
-        {isLoading && <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>}
-
-        {/* Top Action Buttons */}
-        {!isLoading && <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <Button onClick={() => setShowAddUserDialog(true)} className="flex items-center gap-2">
-              <UserPlus className="w-4 h-4" />
-              Add User
-            </Button>
-            <Button variant="outline" onClick={handleOpenUserSelectionDialog} className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Create Reservation
-            </Button>
-          </div>}
-
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="reservations">Reservations</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
-          </TabsList>
-
-          {/* Pagination Filter */}
-          <div className="mt-4">
-            <PaginationFilter itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage} searchQuery={searchQuery} onSearchChange={setSearchQuery} currentPage={currentPage} totalPages={activeTab === "users" ? totalUserPages : totalReservationPages} onPageChange={setCurrentPage} totalItems={activeTab === "users" ? totalUsers : totalReservations} placeholder={activeTab === "users" ? "Search users by name, phone, email, or flat number..." : "Search reservations by name, phone, or AWB number..."} />
+  return (
+    <PageLayout pageTitle="Admin Dashboard" showBack={false}>
+      <div className="min-h-screen bg-background">
+        <div className="p-4 max-w-4xl mx-auto space-y-6">
+          {/* Header */}
+          <div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              Admin Dashboard
+            </h1>
           </div>
 
-          {/* Users Tab */}
-          <TabsContent value="users" className="space-y-4">
-            {currentUsers.length === 0 ? <div className="text-center py-20">
-                <User className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                <p className="text-muted-foreground">
-                  {searchQuery ? "No users found matching your search." : "No users found for this location."}
+          {/* Top Section - User Info */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="p-4">
+                <h3 className="font-semibold text-foreground mb-2">User Information</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-muted-foreground" />
+                    <span>{user?.user_name || 'N/A'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <span>{user?.user_phone || 'N/A'}</span>
+                  </div>
+                </div>
+              </Card>
+              <Card className="p-4">
+                <h3 className="font-semibold text-foreground mb-2">Access Codes</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Drop Code</p>
+                    <p className="font-semibold">{user?.user_dropcode || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Passcode</p>
+                    <p className="font-semibold">{user?.user_pickupcode || 'N/A'}</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="p-4">
+                <h3 className="font-semibold text-foreground mb-2">Credits</h3>
+                <p className="text-2xl font-bold text-green-600">
+                  {user?.user_credit_limit ? Number(user.user_credit_limit) - Number(user.user_credit_used || 0) : 0}
                 </p>
-              </div> : <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {currentUsers.map(locationUser => <Card key={locationUser.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow overflow-hidden" onClick={() => handleUserCardClick(locationUser)}>
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                          <User className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-foreground truncate">{locationUser.user_name}</h3>
-                          <div className="space-y-1 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Mail className="w-3 h-3 shrink-0" />
-                              <span className="truncate">{locationUser.user_email || "No email"}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Phone className="w-3 h-3 shrink-0" />
-                              <span className="truncate">{locationUser.user_phone}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Home className="w-3 h-3 shrink-0" />
-                              <span className="truncate">{locationUser.user_flatno || "No flat number"}</span>
+              </Card>
+              <div className="flex items-end">
+                <Button onClick={() => setShowAddUserDialog(true)} className="flex items-center gap-2">
+                  <UserPlus className="w-4 h-4" />
+                  Add User
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" />
+                <span>{error}</span>
+              </div>
+              <Button variant="outline" size="sm" className="mt-2" onClick={loadData}>
+                Retry
+              </Button>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          )}
+
+          {/* Tabs */}
+          {!isLoading && (
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="pods" className="flex items-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  Pods
+                </TabsTrigger>
+                <TabsTrigger value="users" className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Users
+                </TabsTrigger>
+                <TabsTrigger value="history" className="flex items-center gap-2">
+                  <History className="w-4 h-4" />
+                  History
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Pagination Filter */}
+              <div className="mt-4">
+                <PaginationFilter 
+                  itemsPerPage={itemsPerPage} 
+                  onItemsPerPageChange={setItemsPerPage} 
+                  searchQuery={searchQuery} 
+                  onSearchChange={setSearchQuery} 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={setCurrentPage} 
+                  totalItems={totalItems} 
+                  placeholder={`Search ${activeTab}...`} 
+                />
+              </div>
+
+              {/* Pods Tab */}
+              <TabsContent value="pods" className="space-y-4">
+                {currentItems.length === 0 ? (
+                  <div className="text-center py-20">
+                    <Zap className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                    <p className="text-muted-foreground">
+                      {searchQuery ? "No pods found matching your search." : "No pods found for this location."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {currentItems.map((pod: Pod) => (
+                      <Card key={pod.id} className="p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                            <Zap className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-foreground">{pod.pod_name}</h3>
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                              <p>Status: <span className={`font-medium ${
+                                pod.pod_status === 'available' ? 'text-green-600' : 
+                                pod.pod_status === 'occupied' ? 'text-orange-600' : 
+                                'text-red-600'
+                              }`}>{pod.pod_status}</span></p>
+                              <p>Type: {pod.pod_type || 'N/A'}</p>
+                              <p className="text-xs">{formatDate(pod.created_at)}</p>
                             </div>
                           </div>
-                      </div>
-                    </div>
-                    </div>
-                  </Card>)}
-              </div>}
-          </TabsContent>
-
-          {/* Reservations Tab */}
-          <TabsContent value="reservations" className="space-y-4">
-            <Tabs value={reservationSubTab} onValueChange={setReservationSubTab}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="pickup-pending">Pickup Pending</TabsTrigger>
-                <TabsTrigger value="drop-pending">Drop Pending</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="pickup-pending" className="space-y-4">
-                <ReservationList reservations={currentReservations} onReservationClick={handleReservationCardClick} searchQuery={searchQuery} />
-              </TabsContent>
-
-              <TabsContent value="drop-pending" className="space-y-4">
-                <ReservationList reservations={currentReservations} onReservationClick={handleReservationCardClick} searchQuery={searchQuery} />
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-
-          {/* History Tab */}
-          <TabsContent value="history" className="space-y-4">
-            <Tabs value={historySubTab} onValueChange={setHistorySubTab}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="drop-cancelled">Drop Cancelled</TabsTrigger>
-                <TabsTrigger value="pickup-completed">Pickup Completed</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="drop-cancelled" className="space-y-4">
-                <ReservationList reservations={currentReservations} onReservationClick={handleReservationCardClick} searchQuery={searchQuery} />
-              </TabsContent>
-
-              <TabsContent value="pickup-completed" className="space-y-4">
-                <ReservationList reservations={currentReservations} onReservationClick={handleReservationCardClick} searchQuery={searchQuery} />
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* Add User Dialog */}
-      <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add New User</DialogTitle>
-            <DialogDescription>
-              Create a new user account for this location.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
-            <div>
-              <Label htmlFor="name">Name *</Label>
-              <Input id="name" value={newUserForm.user_name} onChange={e => setNewUserForm(prev => ({
-              ...prev,
-              user_name: e.target.value
-            }))} placeholder="Enter full name" disabled={isLoading} />
-            </div>
-
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={newUserForm.user_email} onChange={e => setNewUserForm(prev => ({
-              ...prev,
-              user_email: e.target.value
-            }))} placeholder="Enter email address" disabled={isLoading} />
-            </div>
-
-            <div>
-              <Label htmlFor="phone">Phone Number *</Label>
-              <Input id="phone" value={newUserForm.user_phone} onChange={e => {
-              const value = e.target.value.replace(/\D/g, '').slice(0, 10);
-              setNewUserForm(prev => ({
-                ...prev,
-                user_phone: value
-              }));
-            }} placeholder="Enter phone number" disabled={isLoading} maxLength={10} />
-            </div>
-
-            <div>
-              <Label htmlFor="flatno">Flat Number</Label>
-              <Input id="flatno" value={newUserForm.user_flatno} onChange={e => setNewUserForm(prev => ({
-              ...prev,
-              user_flatno: e.target.value
-            }))} placeholder="Enter flat/unit number" disabled={isLoading} />
-            </div>
-
-            <div>
-              <Label htmlFor="address">Address</Label>
-              <Textarea id="address" value={newUserForm.user_address} onChange={e => setNewUserForm(prev => ({
-              ...prev,
-              user_address: e.target.value
-            }))} placeholder="Enter full address" rows={3} disabled={isLoading} />
-            </div>
-
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddUserDialog(false)} disabled={isLoading}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddUser} disabled={isLoading || !newUserForm.user_name || !newUserForm.user_phone}>
-              {isLoading ? "Adding..." : "Add User"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* User Selection Dialog for Create Reservation */}
-      <Dialog open={showUserSelectionDialog} onOpenChange={setShowUserSelectionDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden p-6">
-          <DialogHeader>
-            <DialogTitle>Select User for Reservation</DialogTitle>
-            <DialogDescription>
-              Choose a user to create a reservation for.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input placeholder="Search users..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
-            </div>
-
-            <div className="max-h-96 overflow-y-auto space-y-2 p-1">
-              {isLoading ? <div className="text-center py-4 text-muted-foreground">Loading users...</div> : filteredUsers.length === 0 ? <div className="text-center py-4 text-muted-foreground">No users found</div> : filteredUsers.map(locationUser => <Card key={locationUser.id} className="p-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleSelectUserForReservation(locationUser)}>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                        <User className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium">{locationUser.user_name}</h4>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>{locationUser.user_phone}</span>
-                          <span>{locationUser.user_flatno || "No flat"}</span>
                         </div>
-                      </div>
-                      <Button size="sm" variant="outline">
-                        Select
-                      </Button>
-                    </div>
-                  </Card>)}
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Users Tab */}
+              <TabsContent value="users" className="space-y-4">
+                {currentItems.length === 0 ? (
+                  <div className="text-center py-20">
+                    <User className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                    <p className="text-muted-foreground">
+                      {searchQuery ? "No users found matching your search." : "No users found for this location."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {currentItems.map((locationUser: LocationUser) => (
+                      <Card key={locationUser.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleUserCardClick(locationUser)}>
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                              <User className="w-5 h-5 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-foreground truncate">{locationUser.user_name}</h3>
+                              <div className="space-y-1 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Mail className="w-3 h-3 shrink-0" />
+                                  <span className="truncate">{locationUser.user_email || "No email"}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Phone className="w-3 h-3 shrink-0" />
+                                  <span className="truncate">{locationUser.user_phone}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Home className="w-3 h-3 shrink-0" />
+                                  <span className="truncate">{locationUser.user_flatno || "No flat number"}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* History Tab */}
+              <TabsContent value="history" className="space-y-4">
+                {currentItems.length === 0 ? (
+                  <div className="text-center py-20">
+                    <Clock className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                    <p className="text-muted-foreground">
+                      {searchQuery ? "No history found matching your search." : "No reservation history found."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {currentItems.map((reservation: any) => (
+                      <Card key={reservation.id} className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                              <Package className="w-5 h-5 text-primary" />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-medium text-foreground">
+                                {reservation.created_by_name || reservation.user_name || 'Unknown User'}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                {reservation.reservation_awbno || reservation.awb_number || 'No AWB'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Pod: {reservation.pod_name || 'N/A'} • {formatDate(reservation.created_at)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className={`text-xs font-medium px-2 py-1 rounded ${
+                              reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' :
+                              reservation.reservation_status === 'DropPending' ? 'bg-orange-100 text-orange-800' :
+                              reservation.reservation_status === 'PickupPending' ? 'bg-blue-100 text-blue-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {reservation.reservation_status}
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          )}
+        </div>
+
+        {/* Add User Dialog */}
+        <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+          <DialogContent className="max-w-md mx-auto">
+            <DialogHeader>
+              <DialogTitle>Add New User</DialogTitle>
+              <DialogDescription>
+                Fill in the details to add a new user to this location.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4">
+              <div>
+                <Label htmlFor="user_name">Full Name *</Label>
+                <Input
+                  id="user_name"
+                  value={newUserForm.user_name}
+                  onChange={(e) => setNewUserForm(prev => ({ ...prev, user_name: e.target.value }))}
+                  placeholder="Enter full name"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="user_phone">Phone Number *</Label>
+                <Input
+                  id="user_phone"
+                  type="tel"
+                  value={newUserForm.user_phone}
+                  onChange={(e) => setNewUserForm(prev => ({ ...prev, user_phone: e.target.value }))}
+                  placeholder="Enter phone number"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="user_email">Email Address</Label>
+                <Input
+                  id="user_email"
+                  type="email"
+                  value={newUserForm.user_email}
+                  onChange={(e) => setNewUserForm(prev => ({ ...prev, user_email: e.target.value }))}
+                  placeholder="Enter email address"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="user_flatno">Flat/Unit Number</Label>
+                <Input
+                  id="user_flatno"
+                  value={newUserForm.user_flatno}
+                  onChange={(e) => setNewUserForm(prev => ({ ...prev, user_flatno: e.target.value }))}
+                  placeholder="Enter flat/unit number"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="user_address">Address</Label>
+                <Textarea
+                  id="user_address"
+                  value={newUserForm.user_address}
+                  onChange={(e) => setNewUserForm(prev => ({ ...prev, user_address: e.target.value }))}
+                  placeholder="Enter full address"
+                  rows={3}
+                />
+              </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+            
+            <DialogFooter className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAddUserDialog(false)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddUser}
+                disabled={isLoading || !newUserForm.user_name || !newUserForm.user_phone}
+              >
+                {isLoading ? 'Adding...' : 'Add User'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Confirm User Dialog */}
-      <Dialog open={showConfirmUserDialog} onOpenChange={setShowConfirmUserDialog}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Confirm User Selection</DialogTitle>
-            <DialogDescription>
-              Create a reservation for this user?
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedUser && <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">{selectedUser.user_name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-muted-foreground" />
-                <span>{selectedUser.user_phone}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Home className="w-4 h-4 text-muted-foreground" />
-                <span>{selectedUser.user_flatno || "No flat number"}</span>
-              </div>
-            </div>}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmUserDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmUserForReservation}>
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Remove User Confirmation Dialog */}
-      <Dialog open={showRemoveUserDialog} onOpenChange={setShowRemoveUserDialog}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Remove User</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to remove this user? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-
-          {userToRemove && <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">{userToRemove.user_name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-muted-foreground" />
-                <span>{userToRemove.user_phone}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-muted-foreground" />
-                <span>{userToRemove.user_email || "No email"}</span>
-              </div>
-            </div>}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRemoveUserDialog(false)} disabled={isLoading}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleRemoveUser} disabled={isLoading}>
-              {isLoading ? "Removing..." : "Remove User"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Location Detection Popup */}
-      <LocationDetectionPopup isOpen={showLocationPopup} onClose={closeLocationPopup} userId={user?.id || 0} locationId={currentLocationId || ""} />
-    </div>;
-}
-
-// Reservation List Component
-function ReservationList({
-  reservations,
-  onReservationClick,
-  searchQuery
-}: {
-  reservations: Reservation[];
-  onReservationClick: (reservation: Reservation) => void;
-  searchQuery?: string;
-}) {
-  // Add safety check for reservations
-  if (!reservations || !Array.isArray(reservations)) {
-    return <div className="text-center py-20">
-        <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4 opacity-50" />
-        <p className="text-destructive">Invalid reservation data</p>
-      </div>;
-  }
-  if (reservations.length === 0) {
-    return <div className="text-center py-20">
-        <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-        <p className="text-muted-foreground">
-          {searchQuery ? "No reservations found matching your search." : "No reservations found."}
-        </p>
-      </div>;
-  }
-  return <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {reservations.map(reservation => <Card key={reservation.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow overflow-hidden" onClick={() => onReservationClick(reservation)}>
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-              <Package className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground truncate">
-                {reservation.user_name || "Unknown User"}
-              </h3>
-              <div className="space-y-1 text-sm text-muted-foreground">
-                <div className="truncate">AWB: {reservation.awb_number || "N/A"}</div>
-                <div className="truncate">Phone: {reservation.user_phone || "N/A"}</div>
-                <div className="truncate">Status: {reservation.reservation_status || "Unknown"}</div>
-                <div className="truncate">
-                  Created: {reservation.created_at ? new Date(reservation.created_at).toLocaleDateString() : "Unknown"}
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>)}
-    </div>;
+        {/* Location Detection Popup */}
+        <LocationDetectionPopup 
+          isOpen={showLocationPopup} 
+          onClose={closeLocationPopup} 
+          userId={user?.id || 0} 
+          locationId={currentLocationId || ""} 
+        />
+      </div>
+    </PageLayout>
+  );
 }

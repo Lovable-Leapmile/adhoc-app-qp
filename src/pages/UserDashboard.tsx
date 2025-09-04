@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Package, Clock, ChevronRight } from "lucide-react";
+import { MapPin, Package, Clock, ChevronRight, User as UserIcon, Phone } from "lucide-react";
 import { apiService, UserLocation } from "@/services/api";
 import { getUserData, isLoggedIn, getPodName, getLocationId, saveLastLocation, saveLocationId, refreshUserData } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
@@ -231,11 +231,22 @@ export default function UserDashboard() {
     }
   };
   return <div className="min-h-screen bg-background my-[16px]">
-      {/* Create Reservation Button */}
-      
-
       {/* User Information Cards */}
       <div className="max-w-md mx-auto px-[14px] mb-6">
+        {/* User Name and Phone Number */}
+        <Card className="p-4 mb-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <UserIcon className="w-4 h-4 text-muted-foreground" />
+              <span className="font-semibold text-foreground">{user?.user_name || 'N/A'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-muted-foreground" />
+              <span className="text-foreground">{user?.user_phone || 'N/A'}</span>
+            </div>
+          </div>
+        </Card>
+
         <div className="grid grid-cols-2 gap-3 mb-4">
           <Card className="p-4 text-center">
             <p className="text-sm text-muted-foreground mb-1">Drop Code</p>
