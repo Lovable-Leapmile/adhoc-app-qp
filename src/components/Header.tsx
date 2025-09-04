@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { User, MapPin, HelpCircle, LogOut, Menu, Package, CreditCard, Lock } from "lucide-react";
+import { User, MapPin, HelpCircle, LogOut, Menu, Package, CreditCard, Lock, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,8 @@ export function Header({
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showPasscodeDialog, setShowPasscodeDialog] = useState(false);
   const [passcodeData, setPasscodeData] = useState({ newPasscode: '', confirmPasscode: '' });
+  const [showNewPasscode, setShowNewPasscode] = useState(false);
+  const [showConfirmPasscode, setShowConfirmPasscode] = useState(false);
   const { toast } = useToast();
   const user = getUserData();
   const roleText = useMemo(() => {
@@ -146,29 +148,73 @@ export function Header({
           <DialogHeader>
             <DialogTitle>Change Passcode</DialogTitle>
             <DialogDescription>
-              Enter your new passcode and confirm it below.
+              Enter your new 6-digit passcode and confirm it below.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="newPasscode">Enter New Passcode</Label>
-              <Input
-                id="newPasscode"
-                type="password"
-                value={passcodeData.newPasscode}
-                onChange={(e) => setPasscodeData(prev => ({ ...prev, newPasscode: e.target.value }))}
-                placeholder="New passcode"
-              />
+              <Label htmlFor="newPasscode">Enter New 6-Digit Passcode</Label>
+              <div className="relative">
+                <Input
+                  id="newPasscode"
+                  type={showNewPasscode ? "text" : "password"}
+                  value={passcodeData.newPasscode}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d{0,6}$/.test(value)) {
+                      setPasscodeData(prev => ({ ...prev, newPasscode: value }));
+                    }
+                  }}
+                  maxLength={6}
+                  placeholder="------"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowNewPasscode(!showNewPasscode)}
+                >
+                  {showNewPasscode ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
             <div>
-              <Label htmlFor="confirmPasscode">Re-enter Passcode</Label>
-              <Input
-                id="confirmPasscode"
-                type="password"
-                value={passcodeData.confirmPasscode}
-                onChange={(e) => setPasscodeData(prev => ({ ...prev, confirmPasscode: e.target.value }))}
-                placeholder="Confirm passcode"
-              />
+              <Label htmlFor="confirmPasscode">Re-enter 6-Digit Passcode</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPasscode"
+                  type={showConfirmPasscode ? "text" : "password"}
+                  value={passcodeData.confirmPasscode}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d{0,6}$/.test(value)) {
+                      setPasscodeData(prev => ({ ...prev, confirmPasscode: value }));
+                    }
+                  }}
+                  maxLength={6}
+                  placeholder="------"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowConfirmPasscode(!showConfirmPasscode)}
+                >
+                  {showConfirmPasscode ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
           <DialogFooter className="flex space-x-2">
@@ -187,19 +233,10 @@ export function Header({
                   return;
                 }
                 
-                if (passcodeData.newPasscode.length < 6) {
+                if (passcodeData.newPasscode.length !== 6) {
                   toast({
                     title: "Error",
-                    description: "Passcode must be at least 6 digits",
-                    variant: "destructive"
-                  });
-                  return;
-                }
-                
-                if (passcodeData.newPasscode.length > 10) {
-                  toast({
-                    title: "Error",
-                    description: "Passcode must not exceed 10 digits",
+                    description: "Passcode must be exactly 6 digits",
                     variant: "destructive"
                   });
                   return;
@@ -249,6 +286,8 @@ export function Header({
                   });
                   setShowPasscodeDialog(false);
                   setPasscodeData({ newPasscode: '', confirmPasscode: '' });
+                  setShowNewPasscode(false);
+                  setShowConfirmPasscode(false);
                 } catch (error) {
                   console.error('Error changing passcode:', error);
                   toast({
