@@ -64,28 +64,39 @@ export default function PodDoorsOverview() {
     }
   };
   const handleDoorClick = async (door: Door) => {
-    if (door.door_availability === 'Free' || door.door_availability === 'available') {
-      setDialogContent({
-        type: 'free',
-        message: 'This door is free.'
-      });
-      setDialogOpen(true);
-    } else if (door.door_availability === 'Reserved' || door.door_availability === 'occupied') {
-      try {
-        const reservationData = await apiService.getDoorReservationDetails(door.door_number, podId!);
-        if (reservationData) {
-          setDialogContent({
-            type: 'reserved',
-            data: reservationData
-          });
-          setDialogOpen(true);
-        } else {
-          toast.error("No reservation details found");
+    try {
+      // First fetch the door access code
+      const doorData = await apiService.getDoorAccessCode(podId!, door.door_number);
+      const doorAccessCode = doorData?.records?.[0]?.door_access_code || 'Not available';
+
+      if (door.door_availability === 'Free' || door.door_availability === 'available') {
+        setDialogContent({
+          type: 'free',
+          message: 'This door is free.',
+          doorAccessCode: doorAccessCode
+        });
+        setDialogOpen(true);
+      } else if (door.door_availability === 'Reserved' || door.door_availability === 'occupied') {
+        try {
+          const reservationData = await apiService.getDoorReservationDetails(door.door_number, podId!);
+          if (reservationData) {
+            setDialogContent({
+              type: 'reserved',
+              data: reservationData,
+              doorAccessCode: doorAccessCode
+            });
+            setDialogOpen(true);
+          } else {
+            toast.error("No reservation details found");
+          }
+        } catch (error) {
+          console.error("Error fetching reservation details:", error);
+          toast.error("Failed to fetch reservation details");
         }
-      } catch (error) {
-        console.error("Error fetching reservation details:", error);
-        toast.error("Failed to fetch reservation details");
       }
+    } catch (error) {
+      console.error("Error fetching door access code:", error);
+      toast.error("Failed to fetch door access code");
     }
   };
   if (isLoading) {
@@ -201,7 +212,16 @@ export default function PodDoorsOverview() {
             <DialogTitle>Door Information</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {dialogContent?.type === 'free' ? <p className="text-center text-muted-foreground">{dialogContent.message}</p> : dialogContent?.type === 'reserved' && dialogContent?.data ? <div className="space-y-3">
+            {dialogContent?.type === 'free' ? (
+              <div className="space-y-3">
+                <p className="text-center text-muted-foreground">{dialogContent.message}</p>
+                <div>
+                  <p className="text-sm text-muted-foreground">Door Access Code</p>
+                  <p className="font-mono font-bold text-lg text-center">{dialogContent.doorAccessCode}</p>
+                </div>
+              </div>
+            ) : dialogContent?.type === 'reserved' && dialogContent?.data ? (
+              <div className="space-y-3">
                 <div>
                   <p className="text-sm text-muted-foreground">User Name</p>
                   <p className="font-medium">{dialogContent.data.user_name}</p>
@@ -216,9 +236,10 @@ export default function PodDoorsOverview() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Door Access Code</p>
-                  <p className="font-mono font-bold text-lg">{dialogContent.data.door_access_code}</p>
+                  <p className="font-mono font-bold text-lg">{dialogContent.doorAccessCode}</p>
                 </div>
-              </div> : null}
+              </div>
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>

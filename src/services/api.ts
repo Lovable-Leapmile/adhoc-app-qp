@@ -660,5 +660,26 @@ export const apiService = {
 
     const data = await response.json();
     return data.records?.[0] || null;
+  },
+
+  // Get door access code by pod ID and door number
+  getDoorAccessCode: async (podId: string, doorNumber: number): Promise<any> => {
+    const authToken = localStorage.getItem('auth_token');
+    const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
+
+    const response = await fetch(`${API_BASE_URL}/doors/?pod_id=${podId}&door_no=${doorNumber}`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': authorization,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch door access code');
+    }
+
+    const data = await response.json();
+    return data;
   }
 };
