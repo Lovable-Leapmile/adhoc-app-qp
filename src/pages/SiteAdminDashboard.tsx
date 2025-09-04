@@ -136,6 +136,11 @@ export default function SiteAdminDashboard() {
     }
   }, [user, currentLocationId, activeTab]);
 
+  useEffect(() => {
+    // Reset to first page when search query changes
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const loadData = async () => {
     if (!currentLocationId || !user) return;
     setIsLoading(true);
@@ -330,9 +335,29 @@ export default function SiteAdminDashboard() {
     navigate(`/reservation-details/${reservation.id}`);
   };
 
-  const filteredPods = Array.isArray(pods) ? pods.filter(pod => pod.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) || pod.pod_status?.toLowerCase().includes(searchQuery.toLowerCase())) : [];
-  const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user => user.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_phone?.includes(searchQuery) || user.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_flatno?.toLowerCase().includes(searchQuery.toLowerCase())) : [];
-  const filteredReservations = Array.isArray(reservations) ? reservations.filter(reservation => reservation.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || reservation.user_phone?.includes(searchQuery) || reservation.awb_number?.toLowerCase().includes(searchQuery.toLowerCase())) : [];
+  const filteredPods = Array.isArray(pods) ? pods.filter(pod =>
+    pod.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    pod.pod_status?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    pod.pod_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (pod.pod_numtotaldoors?.toString() || '').includes(searchQuery)
+  ) : [];
+
+  const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user =>
+    user.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.user_phone?.includes(searchQuery) ||
+    user.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.user_flatno?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.user_address?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) : [];
+
+  const filteredReservations = Array.isArray(reservations) ? reservations.filter(reservation =>
+    reservation.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    reservation.user_phone?.includes(searchQuery) ||
+    reservation.awb_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    reservation.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    reservation.reservation_status?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (reservation.user_flatno || '').toLowerCase().includes(searchQuery.toLowerCase())
+  ) : [];
 
   // Get current items for pagination
   const getCurrentItems = () => {
@@ -464,36 +489,34 @@ export default function SiteAdminDashboard() {
               <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>
 
-            {/* Search and Pagination Controls */}
-            {(activeTab === "users" || activeTab === "history") && (
-              <div className="mt-4 mb-4 flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder={`Search ${activeTab}...`}
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-10"
+            {/* Search and Pagination Controls for all tabs */}
+            <div className="mt-4 mb-4 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={`Search ${activeTab}...`}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              {totalItems > 0 && (
+                <div className="w-auto">
+                  <PaginationFilter
+                    itemsPerPage={itemsPerPage}
+                    onItemsPerPageChange={setItemsPerPage}
+                    searchQuery=""
+                    onSearchChange={() => {}}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    totalItems={totalItems}
+                    placeholder=""
+                    compact={true}
                   />
                 </div>
-                {totalItems > 0 && (
-                  <div className="w-auto">
-                    <PaginationFilter
-                      itemsPerPage={itemsPerPage}
-                      onItemsPerPageChange={setItemsPerPage}
-                      searchQuery=""
-                      onSearchChange={() => {}}
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                      totalItems={totalItems}
-                      placeholder=""
-                      compact={true}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+            </div>
 
             <TabsContent value="pods" className="space-y-4 mt-6">
               {currentItems.length === 0 ? (
@@ -519,6 +542,9 @@ export default function SiteAdminDashboard() {
                             <div className="flex items-center space-x-4 mt-1">
                               <span className="text-xs text-muted-foreground">
                                 Total Doors: {pod.pod_numtotaldoors || 0}
+                              </span>
+                              <span className={`text-xs font-medium px-2 py-1 rounded ${pod.pod_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                {pod.pod_status}
                               </span>
                             </div>
                           </div>
@@ -633,23 +659,6 @@ export default function SiteAdminDashboard() {
           </Tabs>
         )}
       </div>
-
-      {/* Pagination - only show when we have results and for pods tab */}
-      {!isLoading && totalItems > 0 && activeTab === "pods" && (
-        <div className="max-w-md mx-auto px-[14px] mt-4">
-          <PaginationFilter
-            itemsPerPage={itemsPerPage}
-            onItemsPerPageChange={setItemsPerPage}
-            searchQuery=""
-            onSearchChange={() => {}}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            totalItems={totalItems}
-            placeholder=""
-          />
-        </div>
-      )}
 
       {/* Add User Dialog */}
       <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
