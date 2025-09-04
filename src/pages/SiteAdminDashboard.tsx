@@ -421,21 +421,14 @@ export default function SiteAdminDashboard() {
                             <h3 className="font-medium text-foreground">{pod.pod_name}</h3>
                             <p className="text-sm text-muted-foreground">Type: {pod.pod_type}</p>
                             <div className="flex items-center space-x-4 mt-1">
-                              <span className={`text-xs font-medium ${pod.pod_status === 'available' ? 'text-green-600' : pod.pod_status === 'occupied' ? 'text-orange-600' : 'text-red-600'}`}>
-                                {pod.pod_status?.toUpperCase() || 'UNKNOWN'}
-                              </span>
+                              
                               <span className="text-xs text-muted-foreground">
                                 {pod.pod_numtotaldoors || 0} doors
                               </span>
                             </div>
                           </div>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => navigate(`/pod-doors-overview?pod_id=${pod.id}&location_id=${pod.location_id}`)}
-                          className="ml-2"
-                        >
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/pod-doors-overview?pod_id=${pod.id}&location_id=${pod.location_id}`)} className="ml-2">
                           View Doors
                         </Button>
                       </div>
