@@ -32,6 +32,7 @@ interface Pod {
   pod_type: string;
   location_id: string;
   created_at: string;
+  pod_numtotaldoors?: number;
 }
 interface Reservation {
   id: string;
@@ -423,7 +424,9 @@ export default function SiteAdminDashboard() {
                               <span className={`text-xs font-medium ${pod.pod_status === 'available' ? 'text-green-600' : pod.pod_status === 'occupied' ? 'text-orange-600' : 'text-red-600'}`}>
                                 {pod.pod_status?.toUpperCase() || 'UNKNOWN'}
                               </span>
-                              <span className="text-xs text-muted-foreground">{formatDate(pod.created_at)}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {pod.pod_numtotaldoors || 0} doors
+                              </span>
                             </div>
                           </div>
                         </div>

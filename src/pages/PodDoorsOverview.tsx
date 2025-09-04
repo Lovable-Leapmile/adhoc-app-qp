@@ -2,11 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { apiService } from "@/services/api";
 import { toast } from "sonner";
-import { isLoggedIn } from "@/utils/storage";
-import qikpodLogo from "@/assets/qikpod-logo.png";
 
 interface PodDetail {
   id: string;
@@ -34,10 +33,12 @@ export default function PodDoorsOverview() {
   const [doors, setDoors] = useState<Door[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogContent, setDialogContent] = useState<any>(null);
 
   useEffect(() => {
-    // Check authentication
-    if (!isLoggedIn()) {
+    const authToken = localStorage.getItem('auth_token');
+    if (!authToken) {
       navigate('/login');
       return;
     }
@@ -65,13 +66,41 @@ export default function PodDoorsOverview() {
       ]);
 
       setPodDetails(podData);
-      setDoors(doorsData);
+      // Sort doors by door_number in ascending order
+      const sortedDoors = doorsData.sort((a: Door, b: Door) => a.door_number - b.door_number);
+      setDoors(sortedDoors);
     } catch (error) {
       console.error("Error loading pod data:", error);
       setError("Failed to load pod information");
       toast.error("Failed to load pod information");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDoorClick = async (door: Door) => {
+    if (door.door_availability === 'Free' || door.door_availability === 'available') {
+      setDialogContent({
+        type: 'free',
+        message: 'This door is free.'
+      });
+      setDialogOpen(true);
+    } else if (door.door_availability === 'Reserved' || door.door_availability === 'occupied') {
+      try {
+        const reservationData = await apiService.getDoorReservationDetails(door.door_number, podId!);
+        if (reservationData) {
+          setDialogContent({
+            type: 'reserved',
+            data: reservationData
+          });
+          setDialogOpen(true);
+        } else {
+          toast.error("No reservation details found");
+        }
+      } catch (error) {
+        console.error("Error fetching reservation details:", error);
+        toast.error("Failed to fetch reservation details");
+      }
     }
   };
 
@@ -136,30 +165,15 @@ export default function PodDoorsOverview() {
 
         {/* Pod Details Section */}
         <Card className="p-4 mb-6">
-          <div className="space-y-2">
-            <div>
-              <p className="text-sm text-muted-foreground">Pod Name</p>
-              <p className="font-semibold text-foreground">{podDetails.pod_name}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Access Code</p>
-              <p className="font-semibold text-foreground">{podDetails.pod_access_code}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Doors</p>
-              <p className="font-semibold text-foreground">{podDetails.pod_numtotaldoors}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Status</p>
-              <span className={`text-xs font-medium px-2 py-1 rounded ${
-                podDetails.pod_status === 'available' 
-                  ? 'bg-green-100 text-green-800' 
-                  : podDetails.pod_status === 'occupied' 
-                  ? 'bg-orange-100 text-orange-800' 
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {podDetails.pod_status?.toUpperCase() || 'UNKNOWN'}
-              </span>
+          <div className="flex items-center space-x-4">
+            <img 
+              src="https://leapmile-website.blr1.cdn.digitaloceanspaces.com/Qikpod/Images/q70.png" 
+              alt="QikPod Logo" 
+              className="h-8 w-8"
+            />
+            <div className="flex-1">
+              <h2 className="font-semibold text-foreground">{podDetails.pod_name}</h2>
+              <p className="text-sm text-muted-foreground">Access Code: {podDetails.pod_access_code}</p>
             </div>
           </div>
         </Card>
@@ -175,7 +189,7 @@ export default function PodDoorsOverview() {
             {/* QikPod Logo */}
             <div className="text-center mb-6">
               <img 
-                src={qikpodLogo} 
+                src="https://leapmile-website.blr1.cdn.digitaloceanspaces.com/Qikpod/Images/q70.png" 
                 alt="QikPod Logo" 
                 className="h-8 mx-auto"
               />
@@ -187,35 +201,25 @@ export default function PodDoorsOverview() {
                 doors.map((door) => (
                   <div
                     key={door.door_number}
-                    className="bg-white/80 rounded-lg p-4 border border-gray-200 shadow-sm"
+                    className="bg-white/80 rounded-lg p-4 border border-gray-200 shadow-sm cursor-pointer hover:bg-white/90 transition-colors"
+                    onClick={() => handleDoorClick(door)}
                   >
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-medium text-gray-800">
-                          Door -- {door.door_number}
+                          Door: {door.door_number}
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
                           <div className={`w-2 h-2 rounded-full ${
-                            door.door_availability === 'available' || door.door_status === 'free' 
+                            door.door_availability === 'Free' || door.door_availability === 'available' 
                               ? 'bg-teal-500' 
                               : 'bg-red-500'
                           }`}></div>
                           <span className="text-sm text-gray-600">
-                            {door.door_availability === 'available' || door.door_status === 'free' 
-                              ? 'Free Door' 
-                              : 'Occupied'
-                            }
+                            {door.door_availability || 'Unknown'}
                           </span>
                         </div>
                       </div>
-                      {door.door_access_code && (
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500">Access Code</p>
-                          <p className="font-mono text-sm font-semibold">
-                            {door.door_access_code}
-                          </p>
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))
@@ -224,16 +228,22 @@ export default function PodDoorsOverview() {
                 Array.from({ length: podDetails.pod_numtotaldoors || 7 }, (_, index) => (
                   <div
                     key={index + 1}
-                    className="bg-white/80 rounded-lg p-4 border border-gray-200 shadow-sm"
+                    className="bg-white/80 rounded-lg p-4 border border-gray-200 shadow-sm cursor-pointer hover:bg-white/90 transition-colors"
+                    onClick={() => handleDoorClick({ 
+                      door_number: index + 1, 
+                      door_availability: 'Free', 
+                      door_status: 'free', 
+                      door_access_code: '' 
+                    })}
                   >
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-medium text-gray-800">
-                          Door -- {index + 1}
+                          Door: {index + 1}
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
                           <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-                          <span className="text-sm text-gray-600">Free Door</span>
+                          <span className="text-sm text-gray-600">Free</span>
                         </div>
                       </div>
                     </div>
@@ -244,6 +254,39 @@ export default function PodDoorsOverview() {
           </div>
         </div>
       </div>
+
+      {/* Dialog for door click information */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Door Information</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {dialogContent?.type === 'free' ? (
+              <p className="text-center text-muted-foreground">{dialogContent.message}</p>
+            ) : dialogContent?.type === 'reserved' && dialogContent?.data ? (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">User Name</p>
+                  <p className="font-medium">{dialogContent.data.user_name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Phone Number</p>
+                  <p className="font-medium">{dialogContent.data.user_phone}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Flat Number</p>
+                  <p className="font-medium">{dialogContent.data.user_flatno}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Door Access Code</p>
+                  <p className="font-mono font-bold text-lg">{dialogContent.data.door_access_code}</p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

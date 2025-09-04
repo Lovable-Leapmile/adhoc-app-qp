@@ -639,5 +639,26 @@ export const apiService = {
       const data = await response.json();
       throw new Error(data.detail || 'Failed to remove user from location');
     }
+  },
+
+  // Get reservation details by door number and pod ID
+  getDoorReservationDetails: async (doorNumber: number, podId: string): Promise<any> => {
+    const authToken = localStorage.getItem('auth_token');
+    const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
+
+    const response = await fetch(`${API_BASE_URL}/adhoc/reservations/?door_number=${doorNumber}&pod_id=${podId}`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': authorization,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch door reservation details');
+    }
+
+    const data = await response.json();
+    return data.records?.[0] || null;
   }
 };
