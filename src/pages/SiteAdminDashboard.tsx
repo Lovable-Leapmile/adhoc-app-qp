@@ -15,6 +15,7 @@ import { apiService } from "@/services/api";
 import { toast } from "sonner";
 import { LocationDetectionPopup } from "@/components/LocationDetectionPopup";
 import { useLocationDetection } from "@/hooks/useLocationDetection";
+
 interface LocationUser {
   id: number;
   user_id: number;
@@ -25,6 +26,7 @@ interface LocationUser {
   user_address: string;
   user_type: string;
 }
+
 interface Pod {
   id: string;
   pod_name: string;
@@ -34,6 +36,7 @@ interface Pod {
   created_at: string;
   pod_numtotaldoors?: number;
 }
+
 interface Reservation {
   id: string;
   user_name: string;
@@ -44,7 +47,13 @@ interface Reservation {
   updated_at: string;
   pod_name?: string;
   location_name?: string;
+  door_number?: string;
+  drop_time?: string;
+  pickup_time?: string;
+  duration?: string;
+  user_flatno?: string;
 }
+
 interface NewUserForm {
   user_name: string;
   user_email: string;
@@ -52,6 +61,7 @@ interface NewUserForm {
   user_address: string;
   user_flatno: string;
 }
+
 export default function SiteAdminDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
@@ -100,6 +110,7 @@ export default function SiteAdminDashboard() {
     showLocationPopup,
     closeLocationPopup
   } = useLocationDetection(user?.id, currentLocationId);
+
   useEffect(() => {
     // Check authentication first
     if (!isLoggedIn()) {
@@ -118,11 +129,13 @@ export default function SiteAdminDashboard() {
     // Reset error state when loading new data
     setError(null);
   }, [navigate]);
+
   useEffect(() => {
     if (user && currentLocationId) {
       loadData();
     }
   }, [user, currentLocationId, activeTab]);
+
   const loadData = async () => {
     if (!currentLocationId || !user) return;
     setIsLoading(true);
@@ -143,6 +156,7 @@ export default function SiteAdminDashboard() {
       setIsLoading(false);
     }
   };
+
   const loadPods = async () => {
     try {
       const authToken = localStorage.getItem('auth_token');
@@ -166,6 +180,7 @@ export default function SiteAdminDashboard() {
       setPods([]);
     }
   };
+
   const loadLocationUsers = async () => {
     try {
       const authToken = localStorage.getItem('auth_token');
@@ -191,6 +206,7 @@ export default function SiteAdminDashboard() {
       setLocationUsers([]);
     }
   };
+
   const loadHistory = async () => {
     try {
       const authToken = localStorage.getItem('auth_token');
@@ -216,6 +232,7 @@ export default function SiteAdminDashboard() {
       setReservations([]);
     }
   };
+
   const handleAddUser = async () => {
     setIsLoading(true);
     try {
@@ -239,6 +256,7 @@ export default function SiteAdminDashboard() {
       setIsLoading(false);
     }
   };
+
   const handleRemoveUser = async () => {
     if (!userToRemove) return;
     setIsLoading(true);
@@ -255,15 +273,18 @@ export default function SiteAdminDashboard() {
       setIsLoading(false);
     }
   };
+
   const openRemoveUserDialog = (user: LocationUser) => {
     setUserToRemove(user);
     setShowRemoveUserDialog(true);
   };
+
   const handleSelectUserForReservation = (selectedUser: LocationUser) => {
     setSelectedUser(selectedUser);
     setShowUserSelectionDialog(false);
     setShowConfirmUserDialog(true);
   };
+
   const handleOpenUserSelectionDialog = async () => {
     setShowUserSelectionDialog(true);
     // Load users when opening the dialog
@@ -271,11 +292,13 @@ export default function SiteAdminDashboard() {
       await loadLocationUsers();
     }
   };
+
   const handleConfirmUserForReservation = () => {
     if (selectedUser && currentLocationId) {
       navigate(`/reservation?user_id=${selectedUser.user_id}&location_id=${currentLocationId}`);
     }
   };
+
   const handleUserCardClick = (clickedUser: LocationUser) => {
     setEditingUser(clickedUser);
     setEditUserForm({
@@ -302,9 +325,11 @@ export default function SiteAdminDashboard() {
       setIsLoading(false);
     }
   };
+
   const handleReservationCardClick = (reservation: Reservation) => {
     navigate(`/reservation-details/${reservation.id}`);
   };
+
   const filteredPods = Array.isArray(pods) ? pods.filter(pod => pod.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) || pod.pod_status?.toLowerCase().includes(searchQuery.toLowerCase())) : [];
   const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user => user.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_phone?.includes(searchQuery) || user.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_flatno?.toLowerCase().includes(searchQuery.toLowerCase())) : [];
   const filteredReservations = Array.isArray(reservations) ? reservations.filter(reservation => reservation.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || reservation.user_phone?.includes(searchQuery) || reservation.awb_number?.toLowerCase().includes(searchQuery.toLowerCase())) : [];
@@ -312,23 +337,29 @@ export default function SiteAdminDashboard() {
   // Get current items for pagination
   const getCurrentItems = () => {
     let items: any[] = [];
-    if (activeTab === "pods") items = filteredPods;else if (activeTab === "users") items = filteredUsers;else if (activeTab === "history") items = filteredReservations;
+    if (activeTab === "pods") items = filteredPods;
+    else if (activeTab === "users") items = filteredUsers;
+    else if (activeTab === "history") items = filteredReservations;
+
     const totalItems = items.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const currentItems = items.slice(startIndex, endIndex);
+
     return {
       currentItems,
       totalItems,
       totalPages
     };
   };
+
   const {
     currentItems,
     totalItems,
     totalPages
   } = getCurrentItems();
+
   const formatDate = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleDateString('en-IN', {
@@ -347,12 +378,15 @@ export default function SiteAdminDashboard() {
   if (showLocationPopup) {
     return <LocationDetectionPopup isOpen={showLocationPopup} onClose={closeLocationPopup} userId={user?.id} locationId={currentLocationId || ''} />;
   }
+
   if (!user) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>;
   }
-  return <div className="min-h-screen bg-background my-[16px]">
+
+  return (
+    <div className="min-h-screen bg-background my-[16px]">
       {/* User Information Cards */}
       <div className="max-w-md mx-auto px-[14px] mb-6">
         {/* User Name and Phone Number */}
@@ -391,7 +425,7 @@ export default function SiteAdminDashboard() {
               {user?.user_credit_limit ? Number(user.user_credit_limit) - Number(user.user_credit_used || 0) : 0}
             </p>
           </Card>
-          <Card className="p-4 text-center flex items-center justify-center bg-[y#fbe55b] bg-[#fbe55b]">
+          <Card className="p-4 text-center flex items-center justify-center bg-[#fbe55b]">
             <Button onClick={() => setShowAddUserDialog(true)} size="sm" className="flex items-center gap-2">
               <UserPlus className="w-4 h-4" />
               Add User
@@ -403,7 +437,8 @@ export default function SiteAdminDashboard() {
       {/* Tabs */}
       <div className="max-w-md mx-auto px-[14px]">
         {/* Error Display */}
-        {error && <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive mb-4">
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive mb-4">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5" />
               <span className="text-sm">{error}</span>
@@ -411,14 +446,18 @@ export default function SiteAdminDashboard() {
             <Button variant="outline" size="sm" className="mt-2" onClick={loadData}>
               Retry
             </Button>
-          </div>}
+          </div>
+        )}
 
         {/* Loading State */}
-        {isLoading && <div className="flex justify-center items-center py-12">
+        {isLoading && (
+          <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>}
+          </div>
+        )}
 
-        {!isLoading && <Tabs value={activeTab} onValueChange={setActiveTab}>
+        {!isLoading && (
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="pods">Pods</TabsTrigger>
               <TabsTrigger value="users">Users</TabsTrigger>
@@ -434,14 +473,18 @@ export default function SiteAdminDashboard() {
             </div>
 
             <TabsContent value="pods" className="space-y-4 mt-6">
-              {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
+              {currentItems.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
                   <Zap className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No Pods</p>
                   <p className="text-sm">
                     {searchQuery ? "No pods found matching your search." : "No pods found for this location."}
                   </p>
-                </div> : <div className="space-y-3">
-                  {currentItems.map((pod: Pod) => <Card key={pod.id} className="p-4">
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {currentItems.map((pod: Pod) => (
+                    <Card key={pod.id} className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -451,7 +494,6 @@ export default function SiteAdminDashboard() {
                             <h3 className="font-medium text-foreground">{pod.pod_name}</h3>
                             <p className="text-sm text-muted-foreground">Type: {pod.pod_type}</p>
                             <div className="flex items-center space-x-4 mt-1">
-                              
                               <span className="text-xs text-muted-foreground">
                                 Total Doors: {pod.pod_numtotaldoors || 0}
                               </span>
@@ -462,19 +504,25 @@ export default function SiteAdminDashboard() {
                           View Doors
                         </Button>
                       </div>
-                    </Card>)}
-                </div>}
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="users" className="space-y-4 mt-6">
-              {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
+              {currentItems.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
                   <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No Users</p>
                   <p className="text-sm">
                     {searchQuery ? "No users found matching your search." : "No users found for this location."}
                   </p>
-                </div> : <div className="space-y-3">
-                  {currentItems.map((locationUser: LocationUser) => <Card key={locationUser.id} className="p-4">
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {currentItems.map((locationUser: LocationUser) => (
+                    <Card key={locationUser.id} className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -490,61 +538,95 @@ export default function SiteAdminDashboard() {
                             <p className="text-xs text-muted-foreground">{locationUser.user_type}</p>
                           </div>
                         </div>
-                         <div className="flex flex-col items-center">
-                           <Button variant="ghost" size="sm" onClick={() => handleUserCardClick(locationUser)} className="text-muted-foreground hover:text-foreground">
-                             <Edit className="w-4 h-4" />
-                           </Button>
-                           <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                         </div>
+                        <div className="flex flex-col items-center">
+                          <Button variant="ghost" size="sm" onClick={() => handleUserCardClick(locationUser)} className="text-muted-foreground hover:text-foreground">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                        </div>
                       </div>
-                    </Card>)}
-                </div>}
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="history" className="space-y-4 mt-6">
-              {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
+              {currentItems.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
                   <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No History</p>
                   <p className="text-sm">
                     {searchQuery ? "No reservations found matching your search." : "Your reservation history will appear here"}
                   </p>
-                </div> : <div className="space-y-4">
-                  {currentItems.map((reservation: any) => <Card key={reservation.id} className="p-4">
-                       <div className="flex items-center space-x-3">
-                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                           <Package className="w-5 h-5 text-primary" />
-                         </div>
-                         <div className="flex-1">
-                           <h3 className="font-medium text-foreground">{reservation.pod_name || 'N/A'}</h3>
-                           <div className="flex items-center justify-end mt-1 space-x-4">
-                             <span className={`text-xs font-medium px-2 py-1 rounded ${reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : reservation.reservation_status === 'DropCompleted' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
-                               {reservation.reservation_status}
-                             </span>
-                             <span className="text-xs text-muted-foreground"><span className="font-semibold">Door:</span> {reservation.door_number || 'N/A'}</span>
-                           </div>
-                           <div className="grid grid-cols-2 gap-2 mt-2">
-                             <div>
-                               <p className="text-xs text-muted-foreground"><span className="font-semibold">User:</span> {reservation.user_name}</p>
-                               <p className="text-xs text-muted-foreground"><span className="font-semibold">Drop:</span> {reservation.drop_time ? formatDate(reservation.drop_time) : 'N/A'}</p>
-                               <p className="text-xs text-muted-foreground"><span className="font-semibold">Duration:</span> {reservation.duration || 'N/A'}</p>
-                             </div>
-                             <div>
-                               <p className="text-xs text-muted-foreground"><span className="font-semibold">Flat:</span> {reservation.user_flatno || 'N/A'}</p>
-                               <p className="text-xs text-muted-foreground"><span className="font-semibold">Pickup:</span> {reservation.pickup_time ? formatDate(reservation.pickup_time) : 'N/A'}</p>
-                             </div>
-                           </div>
-                         </div>
-                       </div>
-                    </Card>)}
-                </div>}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {currentItems.map((reservation: Reservation) => (
+                    <Card key={reservation.id} className="p-4 cursor-pointer" onClick={() => handleReservationCardClick(reservation)}>
+                      <div className="flex items-start space-x-3">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Package className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-medium text-foreground truncate">{reservation.pod_name || 'N/A'}</h3>
+                            <span className={`text-xs font-medium px-2 py-1 rounded flex-shrink-0 ${reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : reservation.reservation_status === 'DropCompleted' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                              {reservation.reservation_status}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-semibold">User:</span> {reservation.user_name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-semibold">Flat:</span> {reservation.user_flatno || 'N/A'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-semibold">Door:</span> {reservation.door_number || 'N/A'}
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-semibold">Drop:</span> {reservation.drop_time ? formatDate(reservation.drop_time) : 'N/A'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-semibold">Pickup:</span> {reservation.pickup_time ? formatDate(reservation.pickup_time) : 'N/A'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-semibold">Duration:</span> {reservation.duration || 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
-          </Tabs>}
+          </Tabs>
+        )}
       </div>
 
       {/* Pagination - only show when we have results */}
-      {!isLoading && totalItems > 0 && <div className="max-w-md mx-auto px-[14px] mt-4">
-          <PaginationFilter itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage} searchQuery="" onSearchChange={() => {}} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalItems={totalItems} placeholder="" />
-        </div>}
+      {!isLoading && totalItems > 0 && (
+        <div className="max-w-md mx-auto px-[14px] mt-4">
+          <PaginationFilter
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={setItemsPerPage}
+            searchQuery=""
+            onSearchChange={() => {}}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            placeholder=""
+          />
+        </div>
+      )}
 
       {/* Add User Dialog */}
       <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
@@ -555,49 +637,79 @@ export default function SiteAdminDashboard() {
               Fill in the details to add a new user to this location.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4">
             <div>
               <Label htmlFor="user_name">Full Name *</Label>
-              <Input id="user_name" value={newUserForm.user_name} onChange={e => setNewUserForm(prev => ({
-              ...prev,
-              user_name: e.target.value
-            }))} placeholder="Enter full name" required />
+              <Input
+                id="user_name"
+                value={newUserForm.user_name}
+                onChange={e => setNewUserForm(prev => ({
+                  ...prev,
+                  user_name: e.target.value
+                }))}
+                placeholder="Enter full name"
+                required
+              />
             </div>
-            
+
             <div>
               <Label htmlFor="user_phone">Phone Number *</Label>
-              <Input id="user_phone" type="tel" value={newUserForm.user_phone} onChange={e => setNewUserForm(prev => ({
-              ...prev,
-              user_phone: e.target.value
-            }))} placeholder="Enter phone number" required />
+              <Input
+                id="user_phone"
+                type="tel"
+                value={newUserForm.user_phone}
+                onChange={e => setNewUserForm(prev => ({
+                  ...prev,
+                  user_phone: e.target.value
+                }))}
+                placeholder="Enter phone number"
+                required
+              />
             </div>
-            
+
             <div>
               <Label htmlFor="user_email">Email Address</Label>
-              <Input id="user_email" type="email" value={newUserForm.user_email} onChange={e => setNewUserForm(prev => ({
-              ...prev,
-              user_email: e.target.value
-            }))} placeholder="Enter email address" />
+              <Input
+                id="user_email"
+                type="email"
+                value={newUserForm.user_email}
+                onChange={e => setNewUserForm(prev => ({
+                  ...prev,
+                  user_email: e.target.value
+                }))}
+                placeholder="Enter email address"
+              />
             </div>
-            
+
             <div>
               <Label htmlFor="user_flatno">Flat/Unit Number</Label>
-              <Input id="user_flatno" value={newUserForm.user_flatno} onChange={e => setNewUserForm(prev => ({
-              ...prev,
-              user_flatno: e.target.value
-            }))} placeholder="Enter flat/unit number" />
+              <Input
+                id="user_flatno"
+                value={newUserForm.user_flatno}
+                onChange={e => setNewUserForm(prev => ({
+                  ...prev,
+                  user_flatno: e.target.value
+                }))}
+                placeholder="Enter flat/unit number"
+              />
             </div>
-            
+
             <div>
               <Label htmlFor="user_address">Address</Label>
-              <Textarea id="user_address" value={newUserForm.user_address} onChange={e => setNewUserForm(prev => ({
-              ...prev,
-              user_address: e.target.value
-            }))} placeholder="Enter full address" rows={3} />
+              <Textarea
+                id="user_address"
+                value={newUserForm.user_address}
+                onChange={e => setNewUserForm(prev => ({
+                  ...prev,
+                  user_address: e.target.value
+                }))}
+                placeholder="Enter full address"
+                rows={3}
+              />
             </div>
           </div>
-          
+
           <DialogFooter className="flex space-x-2">
             <Button variant="outline" onClick={() => setShowAddUserDialog(false)} disabled={isLoading}>
               Cancel
@@ -618,50 +730,50 @@ export default function SiteAdminDashboard() {
               Update user information for {editingUser?.user_name}.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4">
             <div>
               <Label htmlFor="edit_user_flatno">Flat/Unit Number</Label>
-              <Input 
-                id="edit_user_flatno" 
-                value={editUserForm.user_flatno} 
+              <Input
+                id="edit_user_flatno"
+                value={editUserForm.user_flatno}
                 onChange={e => setEditUserForm(prev => ({
                   ...prev,
                   user_flatno: e.target.value
-                }))} 
-                placeholder="Enter flat/unit number" 
+                }))}
+                placeholder="Enter flat/unit number"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="edit_user_address">Address</Label>
-              <Textarea 
-                id="edit_user_address" 
-                value={editUserForm.user_address} 
+              <Textarea
+                id="edit_user_address"
+                value={editUserForm.user_address}
                 onChange={e => setEditUserForm(prev => ({
                   ...prev,
                   user_address: e.target.value
-                }))} 
-                placeholder="Enter full address" 
-                rows={3} 
+                }))}
+                placeholder="Enter full address"
+                rows={3}
               />
             </div>
-            
+
             <div>
               <Label htmlFor="edit_user_email">Email Address</Label>
-              <Input 
-                id="edit_user_email" 
-                type="email" 
-                value={editUserForm.user_email} 
+              <Input
+                id="edit_user_email"
+                type="email"
+                value={editUserForm.user_email}
                 onChange={e => setEditUserForm(prev => ({
                   ...prev,
                   user_email: e.target.value
-                }))} 
-                placeholder="Enter email address" 
+                }))}
+                placeholder="Enter email address"
               />
             </div>
           </div>
-          
+
           <DialogFooter className="flex space-x-2">
             <Button variant="outline" onClick={() => setShowEditUserDialog(false)} disabled={isLoading}>
               Cancel
@@ -692,5 +804,6 @@ export default function SiteAdminDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 }
