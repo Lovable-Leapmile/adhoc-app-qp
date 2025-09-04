@@ -27,7 +27,7 @@ const Index = () => {
       const userData = JSON.parse(localStorage.getItem('qikpod_user') || '{}');
       switch (userData.user_type) {
         case 'SiteAdmin':
-          navigate('/site-admin-dashboard');
+          navigate('/admin-dashboard');
           break;
         case 'Customer':
           navigate('/user-dashboard');

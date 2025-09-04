@@ -35,7 +35,7 @@ const App = () => (
           <Route path="/registration" element={<PageLayout pageTitle="Registration" showBack={true} showSettings={false}><Registration /></PageLayout>} />
           <Route path="/user-dashboard" element={<PageLayout pageTitle="User Dashboard" showBack={false}><UserDashboard /></PageLayout>} />
           <Route path="/customer-dashboard" element={<PageLayout pageTitle="User Dashboard" showBack={false}><UserDashboard /></PageLayout>} />
-          <Route path="/site-admin-dashboard" element={<PageLayout pageTitle="Admin Dashboard" showBack={true}><SiteAdminDashboard /></PageLayout>} />
+          <Route path="/admin-dashboard" element={<PageLayout pageTitle="Admin Dashboard" showBack={true}><SiteAdminDashboard /></PageLayout>} />
           <Route path="/site-security-dashboard" element={<PageLayout pageTitle="Site Security" showBack={true}><SiteSecurityDashboard /></PageLayout>} />
           <Route path="/rto" element={<PageLayout pageTitle="RTO" showBack={true}><RTO /></PageLayout>} />
           <Route path="/locations" element={<PageLayout pageTitle="Your Locations" showBack={true}><Locations /></PageLayout>} />

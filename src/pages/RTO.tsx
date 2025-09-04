@@ -311,7 +311,7 @@ export default function RTO() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/site-admin-dashboard')}
+              onClick={() => navigate('/admin-dashboard')}
               className="h-8 w-8 p-0"
             >
               <ArrowLeft className="h-4 w-4" />

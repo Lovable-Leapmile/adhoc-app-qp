@@ -32,7 +32,7 @@ export default function Login() {
       const userData = JSON.parse(localStorage.getItem('qikpod_user') || '{}');
       switch (userData.user_type) {
         case 'SiteAdmin':
-          navigate('/site-admin-dashboard');
+          navigate('/admin-dashboard');
           break;
         case 'Customer':
           navigate('/user-dashboard');
@@ -135,7 +135,7 @@ export default function Login() {
   const navigateToUserDashboard = (userData: any) => {
     switch (userData.user_type) {
       case 'SiteAdmin':
-        navigate('/site-admin-dashboard');
+        navigate('/admin-dashboard');
         break;
       case 'Customer':
         navigate('/user-dashboard');
