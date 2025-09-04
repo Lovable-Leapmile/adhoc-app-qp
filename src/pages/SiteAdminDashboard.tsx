@@ -311,15 +311,15 @@ export default function SiteAdminDashboard() {
   };
 
   const filteredPods = Array.isArray(pods) ? pods.filter(pod =>
-    pod.pod_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pod.pod_status.toLowerCase().includes(searchQuery.toLowerCase())
+    pod.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    pod.pod_status?.toLowerCase().includes(searchQuery.toLowerCase())
   ) : [];
 
   const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user =>
-    user.user_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.user_phone.includes(searchQuery) ||
-    user.user_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.user_flatno.toLowerCase().includes(searchQuery.toLowerCase())
+    user.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.user_phone?.includes(searchQuery) ||
+    user.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.user_flatno?.toLowerCase().includes(searchQuery.toLowerCase())
   ) : [];
 
   const filteredReservations = Array.isArray(reservations) ? reservations.filter(reservation =>
@@ -499,7 +499,7 @@ export default function SiteAdminDashboard() {
                                 pod.pod_status === 'occupied' ? 'text-orange-600' :
                                 'text-red-600'
                               }`}>
-                                {pod.pod_status.toUpperCase()}
+                                {pod.pod_status?.toUpperCase() || 'UNKNOWN'}
                               </span>
                               <span className="text-xs text-muted-foreground">{formatDate(pod.created_at)}</span>
                             </div>
