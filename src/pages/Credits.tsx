@@ -210,6 +210,10 @@ export default function Credits() {
     setIsLoading(true);
     try {
       const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error('No authentication token found');
+      }
+
       const now = new Date();
       // Format: {userId}-{DDMMYYYYHHMMSS}
       const day = String(now.getDate()).padStart(2, '0');
@@ -219,6 +223,12 @@ export default function Credits() {
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
       const referenceId = `${userData?.id}-${day}${month}${year}${hours}${minutes}${seconds}`;
+
+      console.log('Creating payment with:', {
+        payment_vendor: selectedPaymentMethod,
+        amount: amountPayable,
+        user_id: userData?.id
+      });
 
       const response = await fetch(
         `https://stagingv3.leapmile.com/payments/payments/create_payment/?payment_client_awbno=${userData?.user_phone}&amount=${amountPayable}&payment_client_reference_id=${referenceId}&user_id=${userData?.id}&user_credits=${Math.abs(balanceCredits)}&payment_vendor=${selectedPaymentMethod}`,
@@ -231,27 +241,30 @@ export default function Credits() {
         }
       );
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.payment_url) {
-          // Set payment redirect flag in localStorage for return detection
-          localStorage.setItem('payment_redirect', 'true');
-          localStorage.setItem('payment_id', data.id);
+      console.log('Payment API response status:', response.status);
+      
+      const data = await response.json();
+      console.log('Payment API response data:', data);
 
-          // Use window.location.href instead of replace for better compatibility
-          window.location.href = data.payment_url;
-          return;
-        }
+      if (response.ok && data.payment_url) {
+        // Set payment redirect flag in localStorage for return detection
+        localStorage.setItem('payment_redirect', 'true');
+        localStorage.setItem('payment_id', data.id);
+
+        // Use window.location.href for navigation
+        window.location.href = data.payment_url;
+        return;
       } else {
-        throw new Error('Failed to create payment');
+        throw new Error(data.message || 'Failed to create payment');
       }
     } catch (error) {
       console.error('Error creating payment:', error);
       toast({
         title: "Error",
-        description: "Failed to initiate payment. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to initiate payment. Please try again.",
         variant: "destructive"
       });
+    } finally {
       setIsLoading(false);
     }
   };
