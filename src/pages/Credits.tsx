@@ -201,25 +201,13 @@ export default function Credits() {
       if (response.ok) {
         const data = await response.json();
         if (data.payment_url) {
-          toast({
-            title: "Payment initiated",
-            description: "Redirecting to payment page..."
-          });
+          // Set payment redirect flag in localStorage for return detection
+          localStorage.setItem('payment_redirect', 'true');
+          localStorage.setItem('payment_id', data.id);
           
-          // Set as pending payment before redirect
-          const pendingPaymentData = {
-            id: data.id,
-            payment_amount: amountPayable,
-            payment_vendor: selectedPaymentMethod,
-            payment_status: 'pending',
-            created_at: new Date().toISOString(),
-            payment_url: data.payment_url
-          };
-          setPendingPayment(pendingPaymentData);
-          
-          // Redirect immediately - this should stop all other code execution
-          window.location.href = data.payment_url;
-          return; // Prevent further execution
+          // Force immediate redirect
+          window.location.replace(data.payment_url);
+          return;
         }
       } else {
         throw new Error('Failed to create payment');
@@ -231,7 +219,6 @@ export default function Credits() {
         description: "Failed to initiate payment. Please try again.",
         variant: "destructive"
       });
-    } finally {
       setIsLoading(false);
     }
   };
