@@ -216,10 +216,6 @@ export default function PodDoorsOverview() {
           <div className="space-y-4">
             {dialogContent?.type === 'free' ? <div className="space-y-3">
                 <p className="text-center text-muted-foreground">{dialogContent.message}</p>
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Door Access Code</p>
-                  <p className="font-mono font-bold text-lg">{dialogContent.doorAccessCode}</p>
-                </div>
               </div> : dialogContent?.type === 'reserved' && dialogContent?.data ? <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">User Name</p>
