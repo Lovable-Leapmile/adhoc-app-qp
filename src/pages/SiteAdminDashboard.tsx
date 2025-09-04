@@ -354,6 +354,18 @@ export default function SiteAdminDashboard() {
     }
   };
 
+  // Show location popup if needed
+  if (showLocationPopup) {
+    return (
+      <LocationDetectionPopup
+        isOpen={showLocationPopup}
+        onClose={closeLocationPopup}
+        userId={user?.id}
+        locationId={currentLocationId || ''}
+      />
+    );
+  }
+
   if (!user) return null;
 
   return (
@@ -607,12 +619,14 @@ export default function SiteAdminDashboard() {
       )}
 
       {/* Location Detection Popup */}
-      <LocationDetectionPopup 
-        isOpen={showLocationPopup} 
-        onClose={closeLocationPopup} 
-        userId={user?.id || 0} 
-        locationId={currentLocationId || ""} 
-      />
+      {showLocationPopup && (
+        <LocationDetectionPopup 
+          isOpen={showLocationPopup} 
+          onClose={closeLocationPopup} 
+          userId={user?.id || 0} 
+          locationId={currentLocationId || ""} 
+        />
+      )}
 
       {/* Add User Dialog */}
       <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
