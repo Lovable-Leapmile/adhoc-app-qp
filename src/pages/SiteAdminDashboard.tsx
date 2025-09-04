@@ -464,13 +464,36 @@ export default function SiteAdminDashboard() {
               <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>
 
-            {/* Search */}
-            <div className="mt-4 mb-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input placeholder={`Search ${activeTab}...`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
+            {/* Search and Pagination Controls */}
+            {(activeTab === "users" || activeTab === "history") && (
+              <div className="mt-4 mb-4 flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={`Search ${activeTab}...`}
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {totalItems > 0 && (
+                  <div className="w-auto">
+                    <PaginationFilter
+                      itemsPerPage={itemsPerPage}
+                      onItemsPerPageChange={setItemsPerPage}
+                      searchQuery=""
+                      onSearchChange={() => {}}
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                      totalItems={totalItems}
+                      placeholder=""
+                      compact={true}
+                    />
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
             <TabsContent value="pods" className="space-y-4 mt-6">
               {currentItems.length === 0 ? (
@@ -611,8 +634,8 @@ export default function SiteAdminDashboard() {
         )}
       </div>
 
-      {/* Pagination - only show when we have results */}
-      {!isLoading && totalItems > 0 && (
+      {/* Pagination - only show when we have results and for pods tab */}
+      {!isLoading && totalItems > 0 && activeTab === "pods" && (
         <div className="max-w-md mx-auto px-[14px] mt-4">
           <PaginationFilter
             itemsPerPage={itemsPerPage}
