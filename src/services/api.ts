@@ -498,12 +498,49 @@ export const apiService = {
     });
 
     const data = await response.json();
-    
-    if (response.ok) {
-      return data.records || [];
+    return data.records || [];
+  },
+
+  // Get Pod Details with access code and door count
+  getPodDetails: async (podId: string, locationId: string): Promise<any> => {
+    const authToken = localStorage.getItem('auth_token');
+    const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
+
+    const response = await fetch(`${API_BASE_URL}/pods/?record_id=${podId}&location_id=${locationId}&pod_mode=adhoc`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': authorization,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch pod details');
     }
 
-    throw new Error(data.detail || 'Failed to fetch location users');
+    const data = await response.json();
+    return data.records?.[0] || null;
+  },
+
+  // Get Doors of Pod
+  getPodDoors: async (podId: string): Promise<any[]> => {
+    const authToken = localStorage.getItem('auth_token');
+    const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
+
+    const response = await fetch(`${API_BASE_URL}/pods/doors/${podId}`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': authorization,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch pod doors');
+    }
+
+    const data = await response.json();
+    return data.records || [];
   },
 
   // Get reservations for a location (Site Admin)

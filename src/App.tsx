@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Registration from "./pages/Registration";
 import UserDashboard from "./pages/UserDashboard";
 import SiteAdminDashboard from "./pages/SiteAdminDashboard";
+import PodDoorsOverview from "./pages/PodDoorsOverview";
 import SiteSecurityDashboard from "./pages/SiteSecurityDashboard";
 import RTO from "./pages/RTO";
 import Locations from "./pages/Locations";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/user-dashboard" element={<PageLayout pageTitle="User Dashboard" showBack={false}><UserDashboard /></PageLayout>} />
           <Route path="/customer-dashboard" element={<PageLayout pageTitle="User Dashboard" showBack={false}><UserDashboard /></PageLayout>} />
           <Route path="/admin-dashboard" element={<PageLayout pageTitle="Admin Dashboard" showBack={true}><SiteAdminDashboard /></PageLayout>} />
+          <Route path="/pod-doors-overview" element={<PageLayout pageTitle="Pod Doors Overview" showBack={true}><PodDoorsOverview /></PageLayout>} />
           <Route path="/site-security-dashboard" element={<PageLayout pageTitle="Site Security" showBack={true}><SiteSecurityDashboard /></PageLayout>} />
           <Route path="/rto" element={<PageLayout pageTitle="RTO" showBack={true}><RTO /></PageLayout>} />
           <Route path="/locations" element={<PageLayout pageTitle="Your Locations" showBack={true}><Locations /></PageLayout>} />

@@ -412,7 +412,7 @@ export default function SiteAdminDashboard() {
                 </div> : <div className="space-y-3">
                   {currentItems.map((pod: Pod) => <Card key={pod.id} className="p-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-3 flex-1">
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                             <Zap className="w-5 h-5 text-primary" />
                           </div>
@@ -427,6 +427,14 @@ export default function SiteAdminDashboard() {
                             </div>
                           </div>
                         </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate(`/pod-doors-overview?pod_id=${pod.id}&location_id=${pod.location_id}`)}
+                          className="ml-2"
+                        >
+                          View Doors
+                        </Button>
                       </div>
                     </Card>)}
                 </div>}
