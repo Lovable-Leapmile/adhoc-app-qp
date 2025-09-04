@@ -142,8 +142,15 @@ export default function PodDoorsOverview() {
         <Card className="p-4 mb-6">
           <div className="flex items-center justify-between">
             
-            <div className="text-right">
-              <span className="font-semibold text-foreground">Pod-Name: {podDetails.pod_name}, Access Code: {podDetails.pod_access_code}</span>
+            <div className="flex justify-between items-center w-full">
+              <div className="text-right">
+                <span className="text-foreground">Pod-Name: </span>
+                <span className="font-bold text-foreground">{podDetails.pod_name}</span>
+              </div>
+              <div className="text-right">
+                <span className="text-foreground">Access Code: </span>
+                <span className="font-bold text-foreground">{podDetails.pod_access_code}</span>
+              </div>
             </div>
           </div>
         </Card>
