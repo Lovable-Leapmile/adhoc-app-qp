@@ -8,12 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { HelpCircle, Phone, Mail, MessageSquare, ArrowLeft } from "lucide-react";
 import { getUserData, isLoggedIn } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
-
 export default function Support() {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const user = getUserData();
-  
   const [formData, setFormData] = useState({
     name: user?.user_name || '',
     mobile: user?.user_phone || '',
@@ -21,45 +21,32 @@ export default function Support() {
     description: ''
   });
   const [loading, setLoading] = useState(false);
-
   useEffect(() => {
     if (!isLoggedIn()) {
       navigate('/login');
       return;
     }
   }, [navigate]);
-
-  const issueTypes = [
-    'Locker Access Issue',
-    'Payment Problem',
-    'Damaged Package',
-    'Missing Package',
-    'Technical Issue',
-    'Account Problem',
-    'Other'
-  ];
-
+  const issueTypes = ['Locker Access Issue', 'Payment Problem', 'Damaged Package', 'Missing Package', 'Technical Issue', 'Account Problem', 'Other'];
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.issue || !formData.description) {
       toast({
         title: "Incomplete Form",
         description: "Please fill in all required fields.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     setLoading(true);
-    
+
     // Simulate email sending
     setTimeout(() => {
       toast({
         title: "Support Request Submitted",
-        description: "We'll get back to you within 24 hours.",
+        description: "We'll get back to you within 24 hours."
       });
-      
+
       // Reset form
       setFormData({
         name: user?.user_name || '',
@@ -67,22 +54,14 @@ export default function Support() {
         issue: '',
         description: ''
       });
-      
       setLoading(false);
     }, 2000);
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <div className="mobile-container space-y-6">
         <div className="animate-fade-in">
           <div className="flex items-center gap-4 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(-1)}
-              className="h-8 w-8 p-0"
-            >
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="h-8 w-8 p-0">
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
@@ -135,40 +114,37 @@ export default function Support() {
               <label className="text-sm font-medium text-foreground mb-2 block">
                 Name
               </label>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Your full name"
-                className="h-12"
-              />
+              <Input value={formData.name} onChange={e => setFormData(prev => ({
+              ...prev,
+              name: e.target.value
+            }))} placeholder="Your full name" className="h-12" />
             </div>
 
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">
                 Mobile Number
               </label>
-              <Input
-                value={formData.mobile}
-                onChange={(e) => setFormData(prev => ({ ...prev, mobile: e.target.value }))}
-                placeholder="Your mobile number"
-                className="h-12"
-              />
+              <Input value={formData.mobile} onChange={e => setFormData(prev => ({
+              ...prev,
+              mobile: e.target.value
+            }))} placeholder="Your mobile number" className="h-12" />
             </div>
 
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">
                 Issue Type *
               </label>
-              <Select value={formData.issue} onValueChange={(value) => setFormData(prev => ({ ...prev, issue: value }))}>
+              <Select value={formData.issue} onValueChange={value => setFormData(prev => ({
+              ...prev,
+              issue: value
+            }))}>
                 <SelectTrigger className="h-12">
                   <SelectValue placeholder="Select issue type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {issueTypes.map((issue) => (
-                    <SelectItem key={issue} value={issue}>
+                  {issueTypes.map(issue => <SelectItem key={issue} value={issue}>
                       {issue}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -177,50 +153,20 @@ export default function Support() {
               <label className="text-sm font-medium text-foreground mb-2 block">
                 Description *
               </label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Please describe your issue in detail..."
-                rows={4}
-                className="resize-none"
-              />
+              <Textarea value={formData.description} onChange={e => setFormData(prev => ({
+              ...prev,
+              description: e.target.value
+            }))} placeholder="Please describe your issue in detail..." rows={4} className="resize-none" />
             </div>
 
-            <Button 
-              type="submit" 
-              disabled={loading}
-              className="btn-qikpod w-full h-12"
-            >
+            <Button type="submit" disabled={loading} className="btn-qikpod w-full h-12">
               {loading ? 'Submitting...' : 'Submit Request'}
             </Button>
           </form>
         </Card>
 
         {/* FAQ Section */}
-        <Card className="bg-muted/30 p-6 animate-fade-in">
-          <div className="flex items-center space-x-2 mb-4">
-            <HelpCircle className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-foreground">Frequently Asked Questions</h3>
-          </div>
-          
-          <div className="space-y-3 text-sm">
-            <div>
-              <p className="font-medium text-foreground mb-1">How do I access my locker?</p>
-              <p className="text-muted-foreground">Use your drop/pickup code at the locker keypad or scan the QR code.</p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-foreground mb-1">What if my package is damaged?</p>
-              <p className="text-muted-foreground">Report damaged packages immediately through this support form with photos.</p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-foreground mb-1">How long can I store items?</p>
-              <p className="text-muted-foreground">Standard storage is 48 hours. Extended storage may incur additional charges.</p>
-            </div>
-          </div>
-        </Card>
+        
       </div>
-    </div>
-  );
+    </div>;
 }
