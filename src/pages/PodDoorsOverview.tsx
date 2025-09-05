@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { apiService } from "@/services/api";
 import { toast } from "sonner";
+
 interface PodDetail {
   id: string;
   pod_name: string;
@@ -14,45 +15,58 @@ interface PodDetail {
   pod_status: string;
   location_id: string;
 }
+
 interface Door {
   door_number: number;
   door_availability: string;
   door_status: string;
   door_access_code: string;
 }
+
 export default function PodDoorsOverview() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const podId = searchParams.get('pod_id');
   const locationId = searchParams.get('location_id');
+
   const [podDetails, setPodDetails] = useState<PodDetail | null>(null);
   const [doors, setDoors] = useState<Door[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogContent, setDialogContent] = useState<any>(null);
+
   useEffect(() => {
     const authToken = localStorage.getItem('auth_token');
     if (!authToken) {
       navigate('/login');
       return;
     }
+
     if (!podId || !locationId) {
       toast.error("Missing pod ID or location ID");
       navigate('/admin-dashboard');
       return;
     }
+
     loadPodData();
   }, [podId, locationId, navigate]);
+
   const loadPodData = async () => {
     if (!podId || !locationId) return;
+
     setIsLoading(true);
     setError(null);
+
     try {
       // Load pod details and doors in parallel
-      const [podData, doorsData] = await Promise.all([apiService.getPodDetails(podId, locationId), apiService.getPodDoors(podId)]);
-      setPodDetails(podData);
+      const [podData, doorsData] = await Promise.all([
+        apiService.getPodDetails(podId, locationId),
+        apiService.getPodDoors(podId)
+      ]);
 
+      setPodDetails(podData);
+      
       // Sort doors by door_number in ascending order
       const sortedDoors = doorsData.sort((a: Door, b: Door) => a.door_number - b.door_number);
       setDoors(sortedDoors);
@@ -64,11 +78,13 @@ export default function PodDoorsOverview() {
       setIsLoading(false);
     }
   };
+
   const handleDoorClick = async (door: Door) => {
     try {
       // First fetch the door access code
       const doorData = await apiService.getDoorAccessCode(podId!, door.door_number);
       const doorAccessCode = doorData?.records?.[0]?.door_access_code || 'Not available';
+      
       if (door.door_availability === 'Free' || door.door_availability === 'available') {
         setDialogContent({
           type: 'free',
@@ -99,13 +115,18 @@ export default function PodDoorsOverview() {
       toast.error("Failed to fetch door access code");
     }
   };
+
   if (isLoading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>;
+      </div>
+    );
   }
+
   if (error || !podDetails) {
-    return <div className="min-h-screen bg-background my-[16px]">
+    return (
+      <div className="min-h-screen bg-background my-[16px]">
         <div className="max-w-md mx-auto px-[14px]">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
@@ -126,9 +147,12 @@ export default function PodDoorsOverview() {
             </Button>
           </div>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen bg-background my-[16px]">
+
+  return (
+    <div className="min-h-screen bg-background my-[16px]">
       <div className="max-w-md mx-auto px-[14px]">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
@@ -141,16 +165,9 @@ export default function PodDoorsOverview() {
         {/* Pod Details Section */}
         <Card className="p-4 mb-6">
           <div className="flex items-center justify-between">
-            
-            <div className="flex justify-between items-center w-full">
-              <div className="text-right">
-                <span className="text-foreground">Pod-Name: </span>
-                <span className="font-bold text-foreground">{podDetails.pod_name}</span>
-              </div>
-              <div className="text-right">
-                <span className="text-foreground">Access Code: </span>
-                <span className="font-bold text-foreground">{podDetails.pod_access_code}</span>
-              </div>
+            <img src="https://leapmile-website.blr1.cdn.digitaloceanspaces.com/Qikpod/Images/q70.png" alt="QikPod Logo" className="h-8" />
+            <div className="text-right">
+              <span className="font-semibold text-foreground">Pod-Name: {podDetails.pod_name}, Access Code: {podDetails.pod_access_code}</span>
             </div>
           </div>
         </Card>
@@ -170,7 +187,13 @@ export default function PodDoorsOverview() {
 
             {/* Doors List */}
             <div className="space-y-3">
-              {doors.length > 0 ? doors.map(door => <div key={door.door_number} className="bg-white/80 rounded-lg p-4 border border-gray-200 shadow-sm cursor-pointer hover:bg-white/90 transition-colors" onClick={() => handleDoorClick(door)}>
+              {doors.length > 0 ? (
+                doors.map(door => (
+                  <div 
+                    key={door.door_number} 
+                    className="bg-white/80 rounded-lg p-4 border border-gray-200 shadow-sm cursor-pointer hover:bg-white/90 transition-colors" 
+                    onClick={() => handleDoorClick(door)}
+                  >
                     <div className="text-center">
                       <h3 className="font-medium text-gray-800">
                         Door: {door.door_number}
@@ -182,16 +205,21 @@ export default function PodDoorsOverview() {
                         </span>
                       </div>
                     </div>
-                  </div>) :
-            // Generate doors based on total count if API doesn't return doors
-            Array.from({
-              length: podDetails.pod_numtotaldoors || 7
-            }, (_, index) => <div key={index + 1} className="bg-white/80 rounded-lg p-4 border border-gray-200 shadow-sm cursor-pointer hover:bg-white/90 transition-colors" onClick={() => handleDoorClick({
-              door_number: index + 1,
-              door_availability: 'Free',
-              door_status: 'free',
-              door_access_code: ''
-            })}>
+                  </div>
+                ))
+              ) : (
+                // Generate doors based on total count if API doesn't return doors
+                Array.from({ length: podDetails.pod_numtotaldoors || 7 }, (_, index) => (
+                  <div 
+                    key={index + 1} 
+                    className="bg-white/80 rounded-lg p-4 border border-gray-200 shadow-sm cursor-pointer hover:bg-white/90 transition-colors" 
+                    onClick={() => handleDoorClick({
+                      door_number: index + 1,
+                      door_availability: 'Free',
+                      door_status: 'free',
+                      door_access_code: ''
+                    })}
+                  >
                     <div className="text-center">
                       <h3 className="font-medium text-gray-800">
                         Door: {index + 1}
@@ -201,7 +229,9 @@ export default function PodDoorsOverview() {
                         <span className="text-sm text-gray-600">Free</span>
                       </div>
                     </div>
-                  </div>)}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -214,9 +244,16 @@ export default function PodDoorsOverview() {
             <DialogTitle>Door Information</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {dialogContent?.type === 'free' ? <div className="space-y-3">
+            {dialogContent?.type === 'free' ? (
+              <div className="space-y-3">
                 <p className="text-center text-muted-foreground">{dialogContent.message}</p>
-              </div> : dialogContent?.type === 'reserved' && dialogContent?.data ? <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Door Access Code</p>
+                  <p className="font-mono font-bold text-lg">{dialogContent.doorAccessCode}</p>
+                </div>
+              </div>
+            ) : dialogContent?.type === 'reserved' && dialogContent?.data ? (
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">User Name</p>
                   <p className="font-medium">{dialogContent.data.user_name}</p>
@@ -233,9 +270,11 @@ export default function PodDoorsOverview() {
                   <p className="text-sm text-muted-foreground">Door Access Code</p>
                   <p className="font-mono font-bold text-lg">{dialogContent.doorAccessCode}</p>
                 </div>
-              </div> : null}
+              </div>
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 }

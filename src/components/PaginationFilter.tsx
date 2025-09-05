@@ -2,6 +2,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+
 interface PaginationFilterProps {
   itemsPerPage: number;
   onItemsPerPageChange: (value: number) => void;
@@ -13,10 +14,11 @@ interface PaginationFilterProps {
   totalItems: number;
   placeholder?: string;
 }
-export function PaginationFilter({
-  itemsPerPage,
-  onItemsPerPageChange,
-  searchQuery = "",
+
+export function PaginationFilter({ 
+  itemsPerPage, 
+  onItemsPerPageChange, 
+  searchQuery = "", 
   onSearchChange,
   currentPage,
   totalPages,
@@ -26,10 +28,20 @@ export function PaginationFilter({
 }: PaginationFilterProps) {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-  return <div className="space-y-4">
+
+  return (
+    <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 h-10">
-        
-        <Select value={itemsPerPage.toString()} onValueChange={value => onItemsPerPageChange(Number(value))}>
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={placeholder}
+            value={searchQuery}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            className="pl-10 h-10"
+          />
+        </div>
+        <Select value={itemsPerPage.toString()} onValueChange={(value) => onItemsPerPageChange(Number(value))}>
           <SelectTrigger className="w-16 h-10">
             <SelectValue />
           </SelectTrigger>
@@ -41,13 +53,20 @@ export function PaginationFilter({
         </Select>
       </div>
       
-      {totalItems > 0 && <div className="flex items-center justify-between text-sm text-muted-foreground">
+      {totalItems > 0 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>
             Showing {startItem} to {endItem} of {totalItems} items
           </span>
           
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage <= 1} className="h-8 w-8 p-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="h-8 w-8 p-0"
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             
@@ -55,10 +74,18 @@ export function PaginationFilter({
               Page {currentPage} of {totalPages}
             </span>
             
-            <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage >= totalPages} className="h-8 w-8 p-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className="h-8 w-8 p-0"
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-        </div>}
-    </div>;
+        </div>
+      )}
+    </div>
+  );
 }
