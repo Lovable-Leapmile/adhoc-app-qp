@@ -71,7 +71,7 @@ export default function SiteAdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<LocationUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showRemoveUserDialog, setShowRemoveUserDialog] = useState(false);
-  const [userToRemove, setUserToRemove] = useState<LocationUser | null(null);
+  const [userToRemove, setUserToRemove] = useState<LocationUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showEditUserDialog, setShowEditUserDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<LocationUser | null>(null);
@@ -649,7 +649,7 @@ export default function SiteAdminDashboard() {
           </div>
 
           <DialogFooter className="flex space-x-2">
-            <Button variant="outline" onClick={() => setShowEditUserDialog(false)} disabled={isLoading>
+            <Button variant="outline" onClick={() => setShowEditUserDialog(false)} disabled={isLoading}>
               Cancel
             </Button>
             <Button onClick={handleUpdateUser} disabled={isLoading}>
