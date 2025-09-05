@@ -425,18 +425,30 @@ export default function SiteAdminDashboard() {
               <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>
 
-            {/* Search and Pagination Controls for all tabs */}
-            <div className="mt-4 mb-4 flex items-center justify-between gap-2">
-              <div className="relative flex-1">
+            {/* Search Bar - Moved to top */}
+            <div className="mt-4 mb-3">
+              <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input placeholder={`Search ${activeTab}...`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
               </div>
-              {totalItems > 0 && <div className="flex-shrink-0">
-                  <PaginationFilter itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage} searchQuery="" onSearchChange={() => {}} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalItems={totalItems} placeholder="" />
-                </div>}
             </div>
 
-            <TabsContent value="pods" className="space-y-4 mt-6">
+            {/* Pagination Controls - On separate line */}
+            {totalItems > 0 && <div className="mb-4 flex justify-end">
+                <PaginationFilter
+                  itemsPerPage={itemsPerPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                  searchQuery=""
+                  onSearchChange={() => {}}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={totalItems}
+                  placeholder=""
+                />
+              </div>}
+
+            <TabsContent value="pods" className="space-y-4 mt-2">
               {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                   <Zap className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No Pods</p>
@@ -471,7 +483,7 @@ export default function SiteAdminDashboard() {
                 </div>}
             </TabsContent>
 
-            <TabsContent value="users" className="space-y-4 mt-6">
+            <TabsContent value="users" className="space-y-4 mt-2">
               {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                   <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No Users</p>
@@ -509,7 +521,7 @@ export default function SiteAdminDashboard() {
                 </div>}
             </TabsContent>
 
-            <TabsContent value="history" className="space-y-4 mt-6">
+            <TabsContent value="history" className="space-y-4 mt-2">
               {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                   <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No History</p>
@@ -525,7 +537,7 @@ export default function SiteAdminDashboard() {
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start mb-2">
                             <h3 className="font-medium text-foreground truncate">{reservation.pod_name || 'N/A'}</h3>
-                            <span className={`text-xs font-medium px-2 py-1 rounded flex-shrink-0 ${reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : reservation.reservation_status === 'DropCompleted' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                            <span className={`text-xs font-medium px-2 py-1 rounded flex-shrink-0 ${reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : reservation.reservation_status === 'DropCompleted' => 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
                               {reservation.reservation_status}
                             </span>
                           </div>
