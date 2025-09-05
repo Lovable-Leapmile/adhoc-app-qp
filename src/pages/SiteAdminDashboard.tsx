@@ -425,35 +425,18 @@ export default function SiteAdminDashboard() {
               <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>
 
-            {/* Search Bar */}
-            <div className="mt-4 mb-3">
-              <div className="relative">
+            {/* Search and Pagination Controls for all tabs */}
+            <div className="mt-4 mb-4 flex items-center gap-2">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input placeholder={`Search ${activeTab}...`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
               </div>
+              {totalItems > 0 && <div className="w-auto">
+                  <PaginationFilter itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage} searchQuery="" onSearchChange={() => {}} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalItems={totalItems} placeholder="" />
+                </div>}
             </div>
 
-            {/* Pagination Controls - Horizontal single line */}
-            {totalItems > 0 && <div className="mb-4 flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                  Showing {Math.min(totalItems, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} items
-                </div>
-                <div className="flex items-center space-x-2">
-                  <PaginationFilter
-                    itemsPerPage={itemsPerPage}
-                    onItemsPerPageChange={setItemsPerPage}
-                    searchQuery=""
-                    onSearchChange={() => {}}
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                    totalItems={totalItems}
-                    placeholder=""
-                  />
-                </div>
-              </div>}
-
-            <TabsContent value="pods" className="space-y-4 mt-2">
+            <TabsContent value="pods" className="space-y-4 mt-6">
               {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                   <Zap className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No Pods</p>
@@ -488,7 +471,7 @@ export default function SiteAdminDashboard() {
                 </div>}
             </TabsContent>
 
-            <TabsContent value="users" className="space-y-4 mt-2">
+            <TabsContent value="users" className="space-y-4 mt-6">
               {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                   <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No Users</p>
@@ -496,7 +479,7 @@ export default function SiteAdminDashboard() {
                     {searchQuery ? "No users found matching your search." : "No users found for this location."}
                   </p>
                 </div> : <div className="space-y-3">
-                  {currentItems.map((locationUser: LocationUser) => <Card key={locationUser.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/profile?userId=${locationUser.user_id}&isAdminView=true`)}>
+                  {currentItems.map((locationUser: LocationUser) => <Card key={locationUser.id} className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -513,10 +496,7 @@ export default function SiteAdminDashboard() {
                           </div>
                         </div>
                         <div className="flex flex-col items-center">
-                          <Button variant="ghost" size="sm" onClick={(e) => {
-                            e.stopPropagation();
-                            handleUserCardClick(locationUser);
-                          }} className="text-muted-foreground hover:text-foreground">
+                          <Button variant="ghost" size="sm" onClick={() => handleUserCardClick(locationUser)} className="text-muted-foreground hover:text-foreground">
                             <Edit className="w-4 h-4" />
                           </Button>
                           <ChevronRight className="w-3 h-3 text-muted-foreground" />
@@ -526,7 +506,7 @@ export default function SiteAdminDashboard() {
                 </div>}
             </TabsContent>
 
-            <TabsContent value="history" className="space-y-4 mt-2">
+            <TabsContent value="history" className="space-y-4 mt-6">
               {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                   <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No History</p>
@@ -534,7 +514,7 @@ export default function SiteAdminDashboard() {
                     {searchQuery ? "No reservations found matching your search." : "Your reservation history will appear here"}
                   </p>
                 </div> : <div className="space-y-4">
-                  {currentItems.map((reservation: Reservation) => <Card key={reservation.id} className="p-4">
+                  {currentItems.map((reservation: Reservation) => <Card key={reservation.id} className="p-4 cursor-pointer" onClick={() => handleReservationCardClick(reservation)}>
                       <div className="flex items-start space-x-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                           <Package className="w-5 h-5 text-primary" />
@@ -654,14 +634,6 @@ export default function SiteAdminDashboard() {
 
           <div className="grid gap-4">
             <div>
-              <Label htmlFor="edit_user_email">Email Address</Label>
-              <Input id="edit_user_email" type="email" value={editUserForm.user_email} onChange={e => setEditUserForm(prev => ({
-              ...prev,
-              user_email: e.target.value
-            }))} placeholder="Enter email address" />
-            </div>
-
-            <div>
               <Label htmlFor="edit_user_flatno">Flat/Unit Number</Label>
               <Input id="edit_user_flatno" value={editUserForm.user_flatno} onChange={e => setEditUserForm(prev => ({
               ...prev,
@@ -670,11 +642,19 @@ export default function SiteAdminDashboard() {
             </div>
 
             <div>
-              <Label htmlFor="edit_user_address">Present Address</Label>
+              <Label htmlFor="edit_user_address">Address</Label>
               <Textarea id="edit_user_address" value={editUserForm.user_address} onChange={e => setEditUserForm(prev => ({
               ...prev,
               user_address: e.target.value
-            }))} placeholder="Enter full present address including street, city, state, pincode" rows={3} />
+            }))} placeholder="Enter full address" rows={3} />
+            </div>
+
+            <div>
+              <Label htmlFor="edit_user_email">Email Address</Label>
+              <Input id="edit_user_email" type="email" value={editUserForm.user_email} onChange={e => setEditUserForm(prev => ({
+              ...prev,
+              user_email: e.target.value
+            }))} placeholder="Enter email address" />
             </div>
           </div>
 
