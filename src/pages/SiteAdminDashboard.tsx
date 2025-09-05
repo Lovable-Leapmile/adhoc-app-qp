@@ -71,7 +71,7 @@ export default function SiteAdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<LocationUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showRemoveUserDialog, setShowRemoveUserDialog] = useState(false);
-  const [userToRemove, setUserToRemove] = useState<LocationUser | null>(null);
+  const [userToRemove, setUserToRemove] = useState<LocationUser | null(null);
   const [error, setError] = useState<string | null>(null);
   const [showEditUserDialog, setShowEditUserDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<LocationUser | null>(null);
@@ -429,7 +429,15 @@ export default function SiteAdminDashboard() {
             </TabsList>
 
             {/* Search and Pagination - Moved to top of cards */}
-            
+            <div className="mt-4 mb-4 flex items-center justify-between gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input placeholder={`Search ${activeTab}...`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
+              </div>
+              {totalItems > 0 && <div className="flex-shrink-0">
+                  <PaginationFilter itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage} searchQuery="" onSearchChange={() => {}} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalItems={totalItems} placeholder="" />
+                </div>}
+            </div>
 
             <TabsContent value="pods" className="space-y-4">
               {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
@@ -641,7 +649,7 @@ export default function SiteAdminDashboard() {
           </div>
 
           <DialogFooter className="flex space-x-2">
-            <Button variant="outline" onClick={() => setShowEditUserDialog(false)} disabled={isLoading}>
+            <Button variant="outline" onClick={() => setShowEditUserDialog(false)} disabled={isLoading>
               Cancel
             </Button>
             <Button onClick={handleUpdateUser} disabled={isLoading}>
