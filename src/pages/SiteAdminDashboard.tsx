@@ -289,7 +289,6 @@ export default function SiteAdminDashboard() {
     });
     setShowEditUserDialog(true);
   };
-
   const handleUpdateUser = async () => {
     if (!editingUser) return;
     setIsLoading(true);
@@ -433,7 +432,7 @@ export default function SiteAdminDashboard() {
             <div className="mt-4 mb-4 flex items-center justify-between gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input placeholder={`Search ${activeTab}...`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
+                
               </div>
               {totalItems > 0 && <div className="flex-shrink-0">
                   <PaginationFilter itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage} searchQuery="" onSearchChange={() => {}} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalItems={totalItems} placeholder="" />
@@ -626,43 +625,26 @@ export default function SiteAdminDashboard() {
           <div className="grid gap-4">
             <div>
               <Label htmlFor="edit_user_flatno">Flat/Unit Number</Label>
-              <Input
-                id="edit_user_flatno"
-                value={editUserForm.user_flatno}
-                onChange={e => setEditUserForm(prev => ({
-                  ...prev,
-                  user_flatno: e.target.value
-                }))}
-                placeholder="Enter flat/unit number"
-              />
+              <Input id="edit_user_flatno" value={editUserForm.user_flatno} onChange={e => setEditUserForm(prev => ({
+              ...prev,
+              user_flatno: e.target.value
+            }))} placeholder="Enter flat/unit number" />
             </div>
 
             <div>
               <Label htmlFor="edit_user_address">Address</Label>
-              <Textarea
-                id="edit_user_address"
-                value={editUserForm.user_address}
-                onChange={e => setEditUserForm(prev => ({
-                  ...prev,
-                  user_address: e.target.value
-                }))}
-                placeholder="Enter full address"
-                rows={3}
-              />
+              <Textarea id="edit_user_address" value={editUserForm.user_address} onChange={e => setEditUserForm(prev => ({
+              ...prev,
+              user_address: e.target.value
+            }))} placeholder="Enter full address" rows={3} />
             </div>
 
             <div>
               <Label htmlFor="edit_user_email">Email Address</Label>
-              <Input
-                id="edit_user_email"
-                type="email"
-                value={editUserForm.user_email}
-                onChange={e => setEditUserForm(prev => ({
-                  ...prev,
-                  user_email: e.target.value
-                }))}
-                placeholder="Enter email address"
-              />
+              <Input id="edit_user_email" type="email" value={editUserForm.user_email} onChange={e => setEditUserForm(prev => ({
+              ...prev,
+              user_email: e.target.value
+            }))} placeholder="Enter email address" />
             </div>
           </div>
 
