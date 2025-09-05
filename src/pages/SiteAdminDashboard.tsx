@@ -429,15 +429,7 @@ export default function SiteAdminDashboard() {
             </TabsList>
 
             {/* Search and Pagination - Moved to top of cards */}
-            <div className="mt-4 mb-4 flex items-center justify-between gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                
-              </div>
-              {totalItems > 0 && <div className="flex-shrink-0">
-                  <PaginationFilter itemsPerPage={itemsPerPage} onItemsPerPageChange={setItemsPerPage} searchQuery="" onSearchChange={() => {}} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalItems={totalItems} placeholder="" />
-                </div>}
-            </div>
+            
 
             <TabsContent value="pods" className="space-y-4">
               {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
