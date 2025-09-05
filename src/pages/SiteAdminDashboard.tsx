@@ -211,7 +211,7 @@ export default function SiteAdminDashboard() {
         }
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch history");
+        throw new Error('Failed to fetch history');
       }
       const data = await response.json();
       const historyData = data.records || [];
@@ -449,7 +449,6 @@ export default function SiteAdminDashboard() {
                     onPageChange={setCurrentPage}
                     totalItems={totalItems}
                     placeholder=""
-                    className="flex-nowrap"
                   />
                 </div>
               </div>}
