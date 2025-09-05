@@ -211,7 +211,7 @@ export default function SiteAdminDashboard() {
         }
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch history');
+        throw new Error('Failed to fetch history");
       }
       const data = await response.json();
       const historyData = data.records || [];
@@ -425,7 +425,7 @@ export default function SiteAdminDashboard() {
               <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>
 
-            {/* Search Bar - Moved to top */}
+            {/* Search Bar */}
             <div className="mt-4 mb-3">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -433,19 +433,25 @@ export default function SiteAdminDashboard() {
               </div>
             </div>
 
-            {/* Pagination Controls - On separate line */}
-            {totalItems > 0 && <div className="mb-4 flex justify-end">
-                <PaginationFilter
-                  itemsPerPage={itemsPerPage}
-                  onItemsPerPageChange={setItemsPerPage}
-                  searchQuery=""
-                  onSearchChange={() => {}}
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  totalItems={totalItems}
-                  placeholder=""
-                />
+            {/* Pagination Controls - Horizontal single line */}
+            {totalItems > 0 && <div className="mb-4 flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Showing {Math.min(totalItems, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} items
+                </div>
+                <div className="flex items-center space-x-2">
+                  <PaginationFilter
+                    itemsPerPage={itemsPerPage}
+                    onItemsPerPageChange={setItemsPerPage}
+                    searchQuery=""
+                    onSearchChange={() => {}}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    totalItems={totalItems}
+                    placeholder=""
+                    className="flex-nowrap"
+                  />
+                </div>
               </div>}
 
             <TabsContent value="pods" className="space-y-4 mt-2">
