@@ -537,7 +537,7 @@ export default function SiteAdminDashboard() {
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start mb-2">
                             <h3 className="font-medium text-foreground truncate">{reservation.pod_name || 'N/A'}</h3>
-                            <span className={`text-xs font-medium px-2 py-1 rounded flex-shrink-0 ${reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : reservation.reservation_status === 'DropCompleted' => 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                            <span className={`text-xs font-medium px-2 py-1 rounded flex-shrink-0 ${reservation.reservation_status === 'PickupCompleted' ? 'bg-green-100 text-green-800' : reservation.reservation_status === 'DropCompleted' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
                               {reservation.reservation_status}
                             </span>
                           </div>
