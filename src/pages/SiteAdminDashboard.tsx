@@ -450,7 +450,7 @@ export default function SiteAdminDashboard() {
                     {searchQuery ? "No users found matching your search." : "No users found for this location."}
                   </p>
                 </div> : <div className="space-y-3">
-                  {filteredUsers.map((locationUser: LocationUser) => <Card key={locationUser.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/profile?userId=${locationUser.user_id}&isAdminView=true`)}>
+                   {filteredUsers.map((locationUser: LocationUser) => <Card key={locationUser.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/profile?userId=${locationUser.user_id}&isAdminView=true`)}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">

@@ -35,8 +35,8 @@ interface ProfileForm {
 export default function Profile() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const userId = searchParams.get('user_id');
-  const isAdminView = searchParams.get('admin_view') === 'true';
+  const userId = searchParams.get('userId');
+  const isAdminView = searchParams.get('isAdminView') === 'true';
   const [user, setUser] = useState<UserShape | null>(() => getUserData());
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
