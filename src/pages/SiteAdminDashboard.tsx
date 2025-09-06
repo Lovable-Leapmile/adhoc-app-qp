@@ -15,7 +15,6 @@ import { apiService } from "@/services/api";
 import { toast } from "sonner";
 import { LocationDetectionPopup } from "@/components/LocationDetectionPopup";
 import { useLocationDetection } from "@/hooks/useLocationDetection";
-
 interface LocationUser {
   id: number;
   user_id: number;
@@ -26,7 +25,6 @@ interface LocationUser {
   user_address: string;
   user_type: string;
 }
-
 interface Pod {
   id: string;
   pod_name: string;
@@ -36,7 +34,6 @@ interface Pod {
   created_at: string;
   pod_numtotaldoors?: number;
 }
-
 interface Reservation {
   id: string;
   user_name: string;
@@ -53,7 +50,6 @@ interface Reservation {
   duration?: string;
   user_flatno?: string;
 }
-
 interface NewUserForm {
   user_name: string;
   user_email: string;
@@ -61,7 +57,6 @@ interface NewUserForm {
   user_address: string;
   user_flatno: string;
 }
-
 export default function SiteAdminDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
@@ -110,7 +105,6 @@ export default function SiteAdminDashboard() {
     showLocationPopup,
     closeLocationPopup
   } = useLocationDetection(user?.id, currentLocationId);
-
   useEffect(() => {
     // Check authentication first
     if (!isLoggedIn()) {
@@ -129,18 +123,15 @@ export default function SiteAdminDashboard() {
     // Reset error state when loading new data
     setError(null);
   }, [navigate]);
-
   useEffect(() => {
     if (user && currentLocationId) {
       loadData();
     }
   }, [user, currentLocationId, activeTab]);
-
   useEffect(() => {
     // Reset to first page when search query changes
     setCurrentPage(1);
   }, [searchQuery]);
-
   const loadData = async () => {
     if (!currentLocationId || !user) return;
     setIsLoading(true);
@@ -161,7 +152,6 @@ export default function SiteAdminDashboard() {
       setIsLoading(false);
     }
   };
-
   const loadPods = async () => {
     try {
       const authToken = localStorage.getItem('auth_token');
@@ -185,7 +175,6 @@ export default function SiteAdminDashboard() {
       setPods([]);
     }
   };
-
   const loadLocationUsers = async () => {
     try {
       const authToken = localStorage.getItem('auth_token');
@@ -211,7 +200,6 @@ export default function SiteAdminDashboard() {
       setLocationUsers([]);
     }
   };
-
   const loadHistory = async () => {
     try {
       const authToken = localStorage.getItem('auth_token');
@@ -237,7 +225,6 @@ export default function SiteAdminDashboard() {
       setReservations([]);
     }
   };
-
   const handleAddUser = async () => {
     setIsLoading(true);
     try {
@@ -261,7 +248,6 @@ export default function SiteAdminDashboard() {
       setIsLoading(false);
     }
   };
-
   const handleRemoveUser = async () => {
     if (!userToRemove) return;
     setIsLoading(true);
@@ -278,18 +264,15 @@ export default function SiteAdminDashboard() {
       setIsLoading(false);
     }
   };
-
   const openRemoveUserDialog = (user: LocationUser) => {
     setUserToRemove(user);
     setShowRemoveUserDialog(true);
   };
-
   const handleSelectUserForReservation = (selectedUser: LocationUser) => {
     setSelectedUser(selectedUser);
     setShowUserSelectionDialog(false);
     setShowConfirmUserDialog(true);
   };
-
   const handleOpenUserSelectionDialog = async () => {
     setShowUserSelectionDialog(true);
     // Load users when opening the dialog
@@ -297,13 +280,11 @@ export default function SiteAdminDashboard() {
       await loadLocationUsers();
     }
   };
-
   const handleConfirmUserForReservation = () => {
     if (selectedUser && currentLocationId) {
       navigate(`/reservation?user_id=${selectedUser.user_id}&location_id=${currentLocationId}`);
     }
   };
-
   const handleUserCardClick = (clickedUser: LocationUser) => {
     setEditingUser(clickedUser);
     setEditUserForm({
@@ -313,7 +294,6 @@ export default function SiteAdminDashboard() {
     });
     setShowEditUserDialog(true);
   };
-
   const handleUpdateUser = async () => {
     if (!editingUser) return;
     setIsLoading(true);
@@ -330,61 +310,33 @@ export default function SiteAdminDashboard() {
       setIsLoading(false);
     }
   };
-
   const handleReservationCardClick = (reservation: Reservation) => {
     navigate(`/reservation-details/${reservation.id}`);
   };
-
-  const filteredPods = Array.isArray(pods) ? pods.filter(pod =>
-    pod.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pod.pod_status?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pod.pod_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (pod.pod_numtotaldoors?.toString() || '').includes(searchQuery)
-  ) : [];
-
-  const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user =>
-    user.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.user_phone?.includes(searchQuery) ||
-    user.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.user_flatno?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.user_address?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) : [];
-
-  const filteredReservations = Array.isArray(reservations) ? reservations.filter(reservation =>
-    reservation.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    reservation.user_phone?.includes(searchQuery) ||
-    reservation.awb_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    reservation.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    reservation.reservation_status?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (reservation.user_flatno || '').toLowerCase().includes(searchQuery.toLowerCase())
-  ) : [];
+  const filteredPods = Array.isArray(pods) ? pods.filter(pod => pod.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) || pod.pod_status?.toLowerCase().includes(searchQuery.toLowerCase()) || pod.pod_type?.toLowerCase().includes(searchQuery.toLowerCase()) || (pod.pod_numtotaldoors?.toString() || '').includes(searchQuery)) : [];
+  const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user => user.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_phone?.includes(searchQuery) || user.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_flatno?.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_address?.toLowerCase().includes(searchQuery.toLowerCase())) : [];
+  const filteredReservations = Array.isArray(reservations) ? reservations.filter(reservation => reservation.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || reservation.user_phone?.includes(searchQuery) || reservation.awb_number?.toLowerCase().includes(searchQuery.toLowerCase()) || reservation.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) || reservation.reservation_status?.toLowerCase().includes(searchQuery.toLowerCase()) || (reservation.user_flatno || '').toLowerCase().includes(searchQuery.toLowerCase())) : [];
 
   // Get current items for pagination
   const getCurrentItems = () => {
     let items: any[] = [];
-    if (activeTab === "pods") items = filteredPods;
-    else if (activeTab === "users") items = filteredUsers;
-    else if (activeTab === "history") items = filteredReservations;
-
+    if (activeTab === "pods") items = filteredPods;else if (activeTab === "users") items = filteredUsers;else if (activeTab === "history") items = filteredReservations;
     const totalItems = items.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const currentItems = items.slice(startIndex, endIndex);
-
     return {
       currentItems,
       totalItems,
       totalPages
     };
   };
-
   const {
     currentItems,
     totalItems,
     totalPages
   } = getCurrentItems();
-
   const formatDate = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleDateString('en-IN', {
@@ -403,15 +355,12 @@ export default function SiteAdminDashboard() {
   if (showLocationPopup) {
     return <LocationDetectionPopup isOpen={showLocationPopup} onClose={closeLocationPopup} userId={user?.id} locationId={currentLocationId || ''} />;
   }
-
   if (!user) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background my-[16px]">
+  return <div className="min-h-screen bg-background my-[16px]">
       {/* User Information Cards */}
       <div className="max-w-md mx-auto px-[14px] mb-6">
         {/* User Name and Phone Number */}
@@ -462,65 +411,52 @@ export default function SiteAdminDashboard() {
       {/* Tabs */}
       <div className="max-w-md mx-auto px-[14px]">
         {/* Error Display */}
-        {error && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive mb-4">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              <span>{error}</span>
-            </div>
-            <Button variant="outline" size="sm" className="mt-2" onClick={loadData}>
-              Retry
-            </Button>
-          </div>
-        )}
+        {error}
 
         {/* Loading State */}
-        {isLoading && (
-          <div className="flex justify-center items-center py-12">
+        {isLoading && <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        )}
+          </div>}
 
-        {!isLoading && (
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+        {!isLoading && <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="pods">Pods</TabsTrigger>
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>
 
-            {/* Pagination Filter */}
-            <div className="mt-4">
-              <PaginationFilter
-                itemsPerPage={itemsPerPage}
-                onItemsPerPageChange={setItemsPerPage}
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                totalItems={totalItems}
-                placeholder={
-                  activeTab === "pods" ? "Search pods by name, status, or type..." :
-                  activeTab === "users" ? "Search users by name, phone, email, or flat number..." :
-                  "Search reservations by name, phone, AWB, or pod name..."
-                }
-              />
+            {/* Search Bar - Moved to top */}
+            <div className="mt-4 mb-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input placeholder={`Search ${activeTab}...`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
+              </div>
             </div>
 
-            <TabsContent value="pods" className="space-y-4 mt-6">
-              {currentItems.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
+            {/* Pagination Controls - On separate line */}
+            {totalItems > 0 && <div className="mb-4 flex justify-end">
+                <PaginationFilter
+                  itemsPerPage={itemsPerPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                  searchQuery=""
+                  onSearchChange={() => {}}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={totalItems}
+                  placeholder=""
+                />
+              </div>}
+
+            <TabsContent value="pods" className="space-y-4 mt-2">
+              {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                   <Zap className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No Pods</p>
                   <p className="text-sm">
                     {searchQuery ? "No pods found matching your search." : "No pods found for this location."}
                   </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {currentItems.map((pod: Pod) => (
-                    <Card key={pod.id} className="p-4">
+                </div> : <div className="space-y-3">
+                  {currentItems.map((pod: Pod) => <Card key={pod.id} className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -543,25 +479,19 @@ export default function SiteAdminDashboard() {
                           View Doors
                         </Button>
                       </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
+                    </Card>)}
+                </div>}
             </TabsContent>
 
-            <TabsContent value="users" className="space-y-4 mt-6">
-              {currentItems.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
+            <TabsContent value="users" className="space-y-4 mt-2">
+              {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                   <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No Users</p>
                   <p className="text-sm">
                     {searchQuery ? "No users found matching your search." : "No users found for this location."}
                   </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {currentItems.map((locationUser: LocationUser) => (
-                    <Card key={locationUser.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/profile?userId=${locationUser.user_id}&isAdminView=true`)}>
+                </div> : <div className="space-y-3">
+                  {currentItems.map((locationUser: LocationUser) => <Card key={locationUser.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/profile?userId=${locationUser.user_id}&isAdminView=true`)}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -587,25 +517,19 @@ export default function SiteAdminDashboard() {
                           <ChevronRight className="w-3 h-3 text-muted-foreground" />
                         </div>
                       </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
+                    </Card>)}
+                </div>}
             </TabsContent>
 
-            <TabsContent value="history" className="space-y-4 mt-6">
-              {currentItems.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
+            <TabsContent value="history" className="space-y-4 mt-2">
+              {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                   <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No History</p>
                   <p className="text-sm">
                     {searchQuery ? "No reservations found matching your search." : "Your reservation history will appear here"}
                   </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {currentItems.map((reservation: Reservation) => (
-                    <Card key={reservation.id} className="p-4">
+                </div> : <div className="space-y-4">
+                  {currentItems.map((reservation: Reservation) => <Card key={reservation.id} className="p-4">
                       <div className="flex items-start space-x-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                           <Package className="w-5 h-5 text-primary" />
@@ -644,13 +568,10 @@ export default function SiteAdminDashboard() {
                           </div>
                         </div>
                       </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
+                    </Card>)}
+                </div>}
             </TabsContent>
-          </Tabs>
-        )}
+          </Tabs>}
       </div>
 
       {/* Add User Dialog */}
@@ -782,6 +703,5 @@ export default function SiteAdminDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
