@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, UserPlus, Plus, User, Phone, Mail, Home, Trash2, Package, AlertCircle, Zap, Users, History, Clock, Edit, ChevronRight } from "lucide-react";
-import { PaginationFilter } from "@/components/PaginationFilter";
+
 import { getUserData, isLoggedIn } from "@/utils/storage";
 import { apiService } from "@/services/api";
 import { toast } from "sonner";
@@ -86,9 +86,6 @@ export default function SiteAdminDashboard() {
     user_email: ''
   });
 
-  // Pagination state
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
 
   // Form state
   const [newUserForm, setNewUserForm] = useState<NewUserForm>({
@@ -128,10 +125,6 @@ export default function SiteAdminDashboard() {
       loadData();
     }
   }, [user, currentLocationId, activeTab]);
-  useEffect(() => {
-    // Reset to first page when search query changes
-    setCurrentPage(1);
-  }, [searchQuery]);
   const loadData = async () => {
     if (!currentLocationId || !user) return;
     setIsLoading(true);
@@ -317,26 +310,6 @@ export default function SiteAdminDashboard() {
   const filteredUsers = Array.isArray(locationUsers) ? locationUsers.filter(user => user.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_phone?.includes(searchQuery) || user.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_flatno?.toLowerCase().includes(searchQuery.toLowerCase()) || user.user_address?.toLowerCase().includes(searchQuery.toLowerCase())) : [];
   const filteredReservations = Array.isArray(reservations) ? reservations.filter(reservation => reservation.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || reservation.user_phone?.includes(searchQuery) || reservation.awb_number?.toLowerCase().includes(searchQuery.toLowerCase()) || reservation.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) || reservation.reservation_status?.toLowerCase().includes(searchQuery.toLowerCase()) || (reservation.user_flatno || '').toLowerCase().includes(searchQuery.toLowerCase())) : [];
 
-  // Get current items for pagination
-  const getCurrentItems = () => {
-    let items: any[] = [];
-    if (activeTab === "pods") items = filteredPods;else if (activeTab === "users") items = filteredUsers;else if (activeTab === "history") items = filteredReservations;
-    const totalItems = items.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentItems = items.slice(startIndex, endIndex);
-    return {
-      currentItems,
-      totalItems,
-      totalPages
-    };
-  };
-  const {
-    currentItems,
-    totalItems,
-    totalPages
-  } = getCurrentItems();
   const formatDate = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleDateString('en-IN', {
@@ -433,30 +406,16 @@ export default function SiteAdminDashboard() {
               </div>
             </div>
 
-            {/* Pagination Controls - On separate line */}
-            {totalItems > 0 && <div className="mb-4 flex justify-end">
-                <PaginationFilter
-                  itemsPerPage={itemsPerPage}
-                  onItemsPerPageChange={setItemsPerPage}
-                  searchQuery=""
-                  onSearchChange={() => {}}
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  totalItems={totalItems}
-                  placeholder=""
-                />
-              </div>}
 
             <TabsContent value="pods" className="space-y-4 mt-2">
-              {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
+              {filteredPods.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                   <Zap className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No Pods</p>
                   <p className="text-sm">
                     {searchQuery ? "No pods found matching your search." : "No pods found for this location."}
                   </p>
                 </div> : <div className="space-y-3">
-                  {currentItems.map((pod: Pod) => <Card key={pod.id} className="p-4">
+                  {filteredPods.map((pod: Pod) => <Card key={pod.id} className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -484,14 +443,14 @@ export default function SiteAdminDashboard() {
             </TabsContent>
 
             <TabsContent value="users" className="space-y-4 mt-2">
-              {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
+              {filteredUsers.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                   <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No Users</p>
                   <p className="text-sm">
                     {searchQuery ? "No users found matching your search." : "No users found for this location."}
                   </p>
                 </div> : <div className="space-y-3">
-                  {currentItems.map((locationUser: LocationUser) => <Card key={locationUser.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/profile?userId=${locationUser.user_id}&isAdminView=true`)}>
+                  {filteredUsers.map((locationUser: LocationUser) => <Card key={locationUser.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/profile?userId=${locationUser.user_id}&isAdminView=true`)}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -522,14 +481,14 @@ export default function SiteAdminDashboard() {
             </TabsContent>
 
             <TabsContent value="history" className="space-y-4 mt-2">
-              {currentItems.length === 0 ? <div className="text-center py-12 text-muted-foreground">
+              {filteredReservations.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                   <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No History</p>
                   <p className="text-sm">
                     {searchQuery ? "No reservations found matching your search." : "Your reservation history will appear here"}
                   </p>
                 </div> : <div className="space-y-4">
-                  {currentItems.map((reservation: Reservation) => <Card key={reservation.id} className="p-4">
+                  {filteredReservations.map((reservation: Reservation) => <Card key={reservation.id} className="p-4">
                       <div className="flex items-start space-x-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                           <Package className="w-5 h-5 text-primary" />
