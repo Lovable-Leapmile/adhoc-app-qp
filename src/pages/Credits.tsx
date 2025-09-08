@@ -205,7 +205,15 @@ export default function Credits() {
   };
 
   const createPayment = async () => {
-    if (!selectedPaymentMethod || amountPayable <= 0 || pendingPayment) return;
+    // If there's a pending payment, navigate to it instead of creating new one
+    if (pendingPayment && pendingPayment.payment_url) {
+      localStorage.setItem('payment_redirect', 'true');
+      localStorage.setItem('payment_id', pendingPayment.id);
+      window.location.href = pendingPayment.payment_url;
+      return;
+    }
+
+    if (!selectedPaymentMethod || amountPayable <= 0) return;
 
     setIsLoading(true);
     try {
@@ -341,11 +349,13 @@ export default function Credits() {
             {amountPayable > 0 ? (
               <Button
                 onClick={createPayment}
-                disabled={!selectedPaymentMethod || amountPayable <= 0 || !!pendingPayment || isLoading}
+                disabled={!selectedPaymentMethod || amountPayable <= 0 || isLoading}
                 className="w-full"
                 size="lg"
               >
-                {isLoading ? 'Processing...' : `Pay ₹${amountPayable.toFixed(1)}`}
+                {isLoading ? 'Processing...' : 
+                 pendingPayment ? 'Complete Pending Payment' : 
+                 `Pay ₹${amountPayable.toFixed(1)}`}
               </Button>
             ) : (
               <Card className="p-4 text-center">
