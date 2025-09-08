@@ -232,36 +232,62 @@ export default function Credits() {
       const seconds = String(now.getSeconds()).padStart(2, '0');
       const referenceId = `${userData?.id}-${day}${month}${year}${hours}${minutes}${seconds}`;
 
-      console.log('Creating payment with:', {
-        payment_vendor: selectedPaymentMethod,
-        amount: amountPayable,
-        user_id: userData?.id
+      // Build URL with proper query parameters
+      const params = new URLSearchParams({
+        payment_client_awbno: userData?.user_phone || '',
+        amount: amountPayable.toString(),
+        payment_client_reference_id: referenceId,
+        user_id: userData?.id?.toString() || '',
+        user_credits: Math.abs(balanceCredits).toString(),
+        payment_vendor: selectedPaymentMethod
       });
 
-      const response = await fetch(
-        `https://stagingv3.leapmile.com/payments/payments/create_payment/?payment_client_awbno=${userData?.user_phone}&amount=${amountPayable}&payment_client_reference_id=${referenceId}&user_id=${userData?.id}&user_credits=${Math.abs(balanceCredits)}&payment_vendor=${selectedPaymentMethod}`,
-        {
-          method: 'POST',
-          headers: {
-            'accept': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          }
+      const url = `https://stagingv3.leapmile.com/payments/payments/create_payment/?${params.toString()}`;
+
+      console.log('Creating payment with URL:', url);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${authToken}`
         }
-      );
+      });
 
       console.log('Payment API response status:', response.status);
-      
+
       const data = await response.json();
       console.log('Payment API response data:', data);
 
-      if (response.ok && data.payment_url) {
-        // Set payment redirect flag in localStorage for return detection
-        localStorage.setItem('payment_redirect', 'true');
-        localStorage.setItem('payment_id', data.id);
+      if (response.ok) {
+        // Check if we got a payment URL directly or if we need to look in records
+        let paymentUrl = data.payment_url;
+        let paymentId = data.id;
 
-        // Use window.location.href for navigation
-        window.location.href = data.payment_url;
-        return;
+        // If the response contains records array, get the payment from there
+        if (data.records && data.records.length > 0) {
+          paymentUrl = data.records[0].payment_url;
+          paymentId = data.records[0].id;
+        }
+
+        if (paymentUrl) {
+          // Set payment redirect flag in localStorage for return detection
+          localStorage.setItem('payment_redirect', 'true');
+          localStorage.setItem('payment_id', paymentId);
+
+          // Use window.location.href for navigation
+          window.location.href = paymentUrl;
+          return;
+        } else {
+          // If no payment URL but the request was successful,
+          // it might have created a pending payment
+          // Refresh payment history to check
+          await fetchPaymentHistory();
+          toast({
+            title: "Payment Initiated",
+            description: "Please check your pending payments to complete the transaction.",
+          });
+        }
       } else {
         throw new Error(data.message || 'Failed to create payment');
       }
