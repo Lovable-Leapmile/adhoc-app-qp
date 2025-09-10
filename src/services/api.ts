@@ -1,4 +1,5 @@
 const API_BASE_URL = 'https://stagingv3.leapmile.com/podcore';
+const PAYMENT_BASE_URL = 'https://stagingv3.leapmile.com/payments';
 const AUTH_TOKEN = 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhY2wiOiJhZG1pbiIsImV4cCI6MTkxMTYyMDE1OX0.RMEW55tHQ95GVap8ChrGdPRbuVxef4Shf0NRddNgGJo';
 
 export interface OTPResponse {
@@ -85,6 +86,14 @@ export interface Reservation {
   location_name?: string;
 }
 
+export interface PaymentResponse {
+  status: string;
+  status_code: number;
+  message: string;
+  payment_url: string;
+  payment_id: string;
+}
+
 export const apiService = {
   async generateOTP(userPhone: string): Promise<OTPResponse> {
     const response = await fetch(`${API_BASE_URL}/otp/generate_otp/?user_phone=${userPhone}`, {
@@ -120,14 +129,14 @@ export const apiService = {
     if (data.access_token) {
       localStorage.setItem('auth_token', data.access_token);
     }
-    
+
     return data;
   },
 
   async getUserLocations(userId: number): Promise<UserLocation[]> {
     const authToken = localStorage.getItem('auth_token');
     const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
-    
+
     const response = await fetch(`${API_BASE_URL}/users/locations/?user_id=${userId}&order_by_field=updated_at&order_by_type=DESC`, {
       method: 'GET',
       headers: {
@@ -162,12 +171,12 @@ export const apiService = {
       }
 
       const data = await response.json();
-      
+
       if (data.records && data.records.length > 0) {
         const pod = data.records[0];
         // Save location_id to local storage
         localStorage.setItem('current_location_id', pod.location_id);
-        
+
         return {
           id: pod.id,
           name: pod.pod_name,
@@ -175,7 +184,7 @@ export const apiService = {
           status: pod.status || 'available'
         };
       }
-      
+
       throw new Error('Pod not found');
     } catch (error) {
       console.error('Error fetching pod info:', error);
@@ -187,7 +196,7 @@ export const apiService = {
     try {
       const authToken = localStorage.getItem('auth_token');
       const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
-      
+
       const response = await fetch(
         `https://stagingv3.leapmile.com/podcore/locations/?record_id=${locationId}`,
         {
@@ -204,12 +213,12 @@ export const apiService = {
       }
 
       const data = await response.json();
-      
+
       if (data.records && data.records.length > 0) {
         const location = data.records[0];
         // Save location name to local storage
         localStorage.setItem('current_location_name', location.location_name);
-        
+
         return {
           id: location.id,
           location_name: location.location_name,
@@ -219,7 +228,7 @@ export const apiService = {
           pincode: location.pincode || ''
         };
       }
-      
+
       throw new Error('Location not found');
     } catch (error) {
       console.error('Error fetching location info:', error);
@@ -230,7 +239,7 @@ export const apiService = {
   async addUserLocation(userId: number, locationId: string): Promise<void> {
     const authToken = localStorage.getItem('auth_token');
     const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
-    
+
     const response = await fetch(`${API_BASE_URL}/users/locations/`, {
       method: 'POST',
       headers: {
@@ -263,7 +272,7 @@ export const apiService = {
       );
 
       const data = await response.json();
-      
+
       // Handle 404 "Records not found" gracefully
       if (response.status === 404 || (data.status === 'failure' && data.message === 'Records not found.')) {
         return [];
@@ -272,7 +281,7 @@ export const apiService = {
       if (!response.ok) {
         throw new Error(`Failed to fetch reservations: ${response.statusText}`);
       }
-      
+
       if (data.records) {
         const currentLocationName = localStorage.getItem('current_location_name') || undefined
         return data.records.map((record: any) => ({
@@ -290,7 +299,7 @@ export const apiService = {
           location_name: record.location_name ?? currentLocationName,
         }));
       }
-      
+
       return [];
     } catch (error) {
       console.error('Error fetching reservations:', error);
@@ -555,7 +564,7 @@ export const apiService = {
     });
 
     const data = await response.json();
-    
+
     if (response.ok) {
       return data.records || [];
     }
@@ -604,7 +613,7 @@ export const apiService = {
   getUserLocationMapping: async (userId: number, locationId: string): Promise<any> => {
     const authToken = localStorage.getItem('auth_token');
     const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
-    
+
     const response = await fetch(`${API_BASE_URL}/users/locations/?user_id=${userId}&location_id=${locationId}`, {
       method: 'GET',
       headers: {
@@ -626,7 +635,7 @@ export const apiService = {
   removeUserFromLocation: async (mappingId: number): Promise<void> => {
     const authToken = localStorage.getItem('auth_token');
     const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
-    
+
     const response = await fetch(`${API_BASE_URL}/users/locations/${mappingId}`, {
       method: 'DELETE',
       headers: {
@@ -681,5 +690,38 @@ export const apiService = {
 
     const data = await response.json();
     return data;
+  },
+
+  // Create payment - NEW FUNCTION ADDED
+  createPayment: async (reservationId: string, amount: number): Promise<PaymentResponse> => {
+    const authToken = localStorage.getItem('auth_token');
+    const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
+
+    // Generate a unique reference ID
+    const referenceId = `${reservationId}_${Date.now()}`;
+
+    const response = await fetch(
+      `${PAYMENT_BASE_URL}/payments/create_payment/?payment_client_awbno=${reservationId}&amount=${amount}&payment_client_reference_id=${referenceId}&payment_vendor=razorpay`,
+      {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Authorization': authorization,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Payment failed: ${response.statusText}`);
+    }
+
+    const data: PaymentResponse = await response.json();
+
+    if (data.status_code === 200 && data.payment_url) {
+      return data;
+    } else {
+      throw new Error(data.message || 'Failed to create payment');
+    }
   }
 };
