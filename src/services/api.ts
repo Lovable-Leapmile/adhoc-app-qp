@@ -697,7 +697,7 @@ export const apiService = {
     const authToken = localStorage.getItem('auth_token');
     const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
 
-    // Generate a unique referenceID
+    // Generate a unique reference ID
     const referenceId = `${reservationId}_${Date.now()}`;
 
     const response = await fetch(
