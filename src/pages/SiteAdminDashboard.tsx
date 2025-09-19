@@ -68,15 +68,10 @@ export default function SiteAdminDashboard() {
   const [activeTab, setActiveTab] = useState("pods");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
-
   // Data state
-  const [allPods, setAllPods] = useState<Pod[]>([]);
-  const [allUsers, setAllUsers] = useState<LocationUser[]>([]);
-  const [allReservations, setAllReservations] = useState<Reservation[]>([]);
+  const [pods, setPods] = useState<Pod[]>([]);
+  const [locationUsers, setLocationUsers] = useState<LocationUser[]>([]);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
 
   // Dialogs state
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
@@ -84,10 +79,6 @@ export default function SiteAdminDashboard() {
   const [showUserSelectionDialog, setShowUserSelectionDialog] = useState(false);
   const [showConfirmUserDialog, setShowConfirmUserDialog] = useState(false);
 
-  // Data state
-  const [locationUsers, setLocationUsers] = useState<LocationUser[]>([]);
-  const [pods, setPods] = useState<Pod[]>([]);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
   const [selectedUser, setSelectedUser] = useState<LocationUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showRemoveUserDialog, setShowRemoveUserDialog] = useState(false);
@@ -142,16 +133,6 @@ export default function SiteAdminDashboard() {
     }
   }, [user, currentLocationId, activeTab]);
 
-  useEffect(() => {
-    // Reset to first page when changing tabs or search query
-    setCurrentPage(1);
-  }, [activeTab, searchQuery]);
-
-  useEffect(() => {
-    // Apply pagination to filtered data
-    applyPagination();
-  }, [currentPage, itemsPerPage, allPods, allUsers, allReservations, searchQuery]);
-
   const loadData = async () => {
     if (!currentLocationId || !user) return;
     setIsLoading(true);
@@ -188,14 +169,12 @@ export default function SiteAdminDashboard() {
       }
       const data = await response.json();
       const podsData = data.records || [];
-      setAllPods(podsData);
-      setTotalItems(podsData.length);
+      setPods(podsData);
     } catch (error) {
       console.error("Error loading pods:", error);
       setError("Failed to load pods");
       toast.error("Failed to load pods");
-      setAllPods([]);
-      setTotalItems(0);
+      setPods([]);
     }
   };
 
@@ -216,14 +195,12 @@ export default function SiteAdminDashboard() {
       const usersData = data.records || [];
       // Filter to show only customers
       const customers = usersData.filter((user: any) => user.user_type === "User" || user.user_type === "Customer");
-      setAllUsers(customers);
-      setTotalItems(customers.length);
+      setLocationUsers(customers);
     } catch (error) {
       console.error("Error loading users:", error);
       setError("Failed to load users");
       toast.error("Failed to load users");
-      setAllUsers([]);
-      setTotalItems(0);
+      setLocationUsers([]);
     }
   };
 
@@ -244,62 +221,12 @@ export default function SiteAdminDashboard() {
       const historyData = data.records || [];
       // Sort by created_at desc (newer entries at the top)
       historyData.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      setAllReservations(historyData);
-      setTotalItems(historyData.length);
+      setReservations(historyData);
     } catch (error) {
       console.error("Error loading history:", error);
       setError("Failed to load history");
       toast.error("Failed to load history");
-      setAllReservations([]);
-      setTotalItems(0);
-    }
-  };
-
-  const applyPagination = () => {
-    // Filter data based on search query
-    let filteredData = [];
-
-    if (activeTab === "pods") {
-      filteredData = allPods.filter(pod =>
-        pod.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        pod.pod_status?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        pod.pod_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (pod.pod_numtotaldoors?.toString() || '').includes(searchQuery)
-      );
-    } else if (activeTab === "users") {
-      filteredData = allUsers.filter(user =>
-        user.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.user_phone?.includes(searchQuery) ||
-        user.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.user_flatno?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.user_address?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    } else if (activeTab === "history") {
-      filteredData = allReservations.filter(reservation =>
-        reservation.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        reservation.user_phone?.includes(searchQuery) ||
-        reservation.awb_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        reservation.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        reservation.reservation_status?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (reservation.user_flatno || '').toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Update total items count
-    setTotalItems(filteredData.length);
-
-    // Apply pagination
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedData = filteredData.slice(startIndex, endIndex);
-
-    // Set the displayed data
-    if (activeTab === "pods") {
-      setPods(paginatedData as Pod[]);
-    } else if (activeTab === "users") {
-      setLocationUsers(paginatedData as LocationUser[]);
-    } else if (activeTab === "history") {
-      setReservations(paginatedData as Reservation[]);
+      setReservations([]);
     }
   };
 
@@ -358,7 +285,7 @@ export default function SiteAdminDashboard() {
   const handleOpenUserSelectionDialog = async () => {
     setShowUserSelectionDialog(true);
     // Load users when opening the dialog
-    if (currentLocationId && allUsers.length === 0) {
+    if (currentLocationId && locationUsers.length === 0) {
       await loadLocationUsers();
     }
   };
@@ -400,20 +327,6 @@ export default function SiteAdminDashboard() {
     navigate(`/reservation-details/${reservation.id}`);
   };
 
-  // Calculate pagination values
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage + 1;
-  const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-  };
-
-  const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(Number(value));
-    setCurrentPage(1);
-  };
-
   const formatDate = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleDateString('en-IN', {
@@ -428,78 +341,30 @@ export default function SiteAdminDashboard() {
     }
   };
 
-  // Pagination component
-  const PaginationControls = () => {
-    if (totalItems === 0) return null;
+  // Filter data based on search query
+  const filteredPods = pods.filter(pod =>
+    pod.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    pod.pod_status?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    pod.pod_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (pod.pod_numtotaldoors?.toString() || '').includes(searchQuery)
+  );
 
-    return (
-      <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-3">
-        <div className="text-sm text-muted-foreground">
-          Showing {startIndex} to {endIndex} of {totalItems} {activeTab}
-        </div>
+  const filteredUsers = locationUsers.filter(user =>
+    user.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.user_phone?.includes(searchQuery) ||
+    user.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.user_flatno?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.user_address?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-        <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="items-per-page" className="text-sm text-muted-foreground whitespace-nowrap">
-              Rows per page:
-            </Label>
-            <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
-              <SelectTrigger className="h-8 w-[70px]">
-                <SelectValue placeholder={itemsPerPage} />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[5, 10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem key={pageSize} value={pageSize.toString()}>
-                    {pageSize}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center space-x-1">
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0"
-              onClick={() => handlePageChange(1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <div className="flex items-center justify-center text-sm font-medium">
-              Page {currentPage} of {totalPages}
-            </div>
-
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages || totalPages === 0}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0"
-              onClick={() => handlePageChange(totalPages)}
-              disabled={currentPage === totalPages || totalPages === 0}
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const filteredReservations = reservations.filter(reservation =>
+    reservation.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    reservation.user_phone?.includes(searchQuery) ||
+    reservation.awb_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    reservation.pod_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    reservation.reservation_status?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (reservation.user_flatno || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Show location popup if needed
   if (showLocationPopup) {
@@ -592,11 +457,8 @@ export default function SiteAdminDashboard() {
               </div>
             </div>
 
-            {/* Pagination Controls */}
-            {totalItems > 0 && <PaginationControls />}
-
             <TabsContent value="pods" className="space-y-4 mt-2">
-              {pods.length === 0 ? (
+              {filteredPods.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Zap className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No Pods</p>
@@ -606,7 +468,7 @@ export default function SiteAdminDashboard() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {pods.map((pod: Pod) => (
+                  {filteredPods.map((pod: Pod) => (
                     <Card key={pod.id} className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
@@ -637,7 +499,7 @@ export default function SiteAdminDashboard() {
             </TabsContent>
 
             <TabsContent value="users" className="space-y-4 mt-2">
-              {locationUsers.length === 0 ? (
+              {filteredUsers.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No Users</p>
@@ -647,7 +509,7 @@ export default function SiteAdminDashboard() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {locationUsers.map((locationUser: LocationUser) => (
+                  {filteredUsers.map((locationUser: LocationUser) => (
                     <Card key={locationUser.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/profile?userId=${locationUser.user_id}&isAdminView=true`)}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
@@ -681,7 +543,7 @@ export default function SiteAdminDashboard() {
             </TabsContent>
 
             <TabsContent value="history" className="space-y-4 mt-2">
-              {reservations.length === 0 ? (
+              {filteredReservations.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No History</p>
@@ -691,7 +553,7 @@ export default function SiteAdminDashboard() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {reservations.map((reservation: Reservation) => (
+                  {filteredReservations.map((reservation: Reservation) => (
                     <Card key={reservation.id} className="p-4">
                       <div className="flex items-start space-x-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
@@ -736,9 +598,6 @@ export default function SiteAdminDashboard() {
                 </div>
               )}
             </TabsContent>
-
-            {/* Pagination Controls at the bottom */}
-            {totalItems > 0 && <PaginationControls />}
           </Tabs>
         )}
       </div>
