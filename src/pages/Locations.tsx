@@ -94,6 +94,7 @@ export default function Locations() {
                       <div className="h-4 bg-muted rounded w-3/4"></div>
                       <div className="h-3 bg-muted rounded w-1/2"></div>
                     </div>
+                    <div className="w-5 h-5 bg-muted rounded"></div>
                   </div>
                 </Card>
               ))}
@@ -111,12 +112,12 @@ export default function Locations() {
                 {locations.map(location => (
                   <Card key={location.id} className="card-modern p-4 cursor-pointer hover:shadow-md transition-all" onClick={() => handleLocationSelect(location)}>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
                           <MapPin className="w-5 h-5 text-primary" />
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium text-foreground">{location.location_name}</h3>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-foreground truncate">{location.location_name}</h3>
                           <p className="text-sm text-muted-foreground line-clamp-2">{location.location_address}</p>
                           <div className="flex items-center space-x-4 mt-1">
                             <span className="text-xs text-muted-foreground">PIN: {location.location_pincode}</span>
@@ -130,7 +131,9 @@ export default function Locations() {
                           </div>
                         </div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      <div className="w-5 h-5 flex items-center justify-center ml-2 shrink-0">
+                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                      </div>
                     </div>
                   </Card>
                 ))}
