@@ -53,47 +53,6 @@ export default function UserDashboard() {
     }
   }, []);
 
-  // Auto-refresh history data when on history tab
-  const handleAutoRefreshHistory = useCallback(async () => {
-    if (activeTab === 'history' && user) {
-      try {
-        const locationId = localStorage.getItem('current_location_id');
-        if (!locationId) return;
-        
-        const authToken = localStorage.getItem('auth_token');
-        const authorization = authToken ? `Bearer ${authToken}` : 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhY2wiOiJhZG1pbiIsImV4cCI6MTkxMTYyMDE1OX0.RMEW55tHQ95GVap8ChrGdPRbuVxef4Shf0NRddNgGJo';
-        
-        const response = await fetch(`https://stagingv3.leapmile.com/podcore/adhoc/reservations/?location_id=${locationId}&user_phone=${user.user_phone}`, {
-          method: 'GET',
-          headers: {
-            'accept': 'application/json',
-            'Authorization': authorization
-          }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          const reservations = data.records || [];
-          setHistoryReservations(reservations.map((record: any) => ({
-            id: String(record.id),
-            reservation_type: record.reservation_type,
-            reservation_status: record.reservation_status,
-            pod_name: record.pod_name,
-            created_at: record.created_at,
-            package_description: record.package_description,
-            drop_code: record.drop_code,
-            pickup_code: record.pickup_code,
-            created_by_name: record.created_by_name,
-            reservation_awbno: record.reservation_awbno,
-            location_name: record.location_name
-          })));
-        }
-      } catch (error) {
-        console.error('Error auto-refreshing history:', error);
-      }
-    }
-  }, [activeTab, user]);
-
   useEffect(() => {
     if (!isLoggedIn()) {
       navigate('/login');
@@ -106,17 +65,13 @@ export default function UserDashboard() {
     initializeData();
     handleRefreshUserData();
 
-    // Set up periodic refresh every 15 seconds for both user data and history
-    const refreshInterval = setInterval(() => {
-      handleRefreshUserData();
-      handleAutoRefreshHistory();
-    }, 15000);
+    // Set up periodic refresh every 30 seconds
+    const refreshInterval = setInterval(handleRefreshUserData, 30000);
 
     // Also refresh when the page becomes visible again (user switches back to tab)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         handleRefreshUserData();
-        handleAutoRefreshHistory();
       }
     };
 
@@ -126,18 +81,17 @@ export default function UserDashboard() {
       clearInterval(refreshInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [navigate, handleRefreshUserData, handleAutoRefreshHistory]);
+  }, [navigate, handleRefreshUserData]);
 
   // Refresh user data when coming from other pages
   useEffect(() => {
     const handleFocus = () => {
       handleRefreshUserData();
-      handleAutoRefreshHistory();
     };
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [handleRefreshUserData, handleAutoRefreshHistory]);
+  }, [handleRefreshUserData]);
   const initializeData = async () => {
     const podName = getPodName();
     if (podName) {

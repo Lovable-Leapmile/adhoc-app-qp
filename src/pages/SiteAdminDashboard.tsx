@@ -130,41 +130,8 @@ export default function SiteAdminDashboard() {
   useEffect(() => {
     if (user && currentLocationId) {
       loadData();
-      
-      // Set up auto-refresh for the current tab every 15 seconds
-      const refreshInterval = setInterval(() => {
-        if (!isLoading) {
-          loadData();
-        }
-      }, 15000);
-
-      // Also refresh when the page becomes visible again
-      const handleVisibilityChange = () => {
-        if (!document.hidden && !isLoading) {
-          loadData();
-        }
-      };
-
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-
-      return () => {
-        clearInterval(refreshInterval);
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-      };
     }
-  }, [user, currentLocationId, activeTab, isLoading]);
-
-  // Auto-refresh when window regains focus
-  useEffect(() => {
-    const handleFocus = () => {
-      if (user && currentLocationId && !isLoading) {
-        loadData();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [user, currentLocationId, isLoading]);
+  }, [user, currentLocationId, activeTab]);
 
   const loadData = async () => {
     if (!currentLocationId || !user) return;
