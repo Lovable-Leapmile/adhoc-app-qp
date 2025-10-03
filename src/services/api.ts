@@ -95,6 +95,26 @@ export interface PaymentResponse {
 }
 
 export const apiService = {
+  async checkUserByPhone(userPhone: string): Promise<{ user_type: string } | null> {
+    const response = await fetch(`${API_BASE_URL}/users/?user_phone=${userPhone}`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': AUTH_TOKEN,
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    if (data.records && data.records.length > 0) {
+      return { user_type: data.records[0].user_type };
+    }
+    return null;
+  },
+
   async generateOTP(userPhone: string): Promise<OTPResponse> {
     const response = await fetch(`${API_BASE_URL}/otp/generate_otp/?user_phone=${userPhone}`, {
       method: 'GET',

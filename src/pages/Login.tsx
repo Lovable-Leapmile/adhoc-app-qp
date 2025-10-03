@@ -67,6 +67,19 @@ export default function Login() {
     }
     setLoading(true);
     try {
+      // Check user type before sending OTP
+      const userCheck = await apiService.checkUserByPhone(phoneNumber);
+      
+      if (userCheck && userCheck.user_type === 'QPStaff') {
+        toast({
+          title: "Access Denied",
+          description: "QPStaff users are not allowed to login.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       await apiService.generateOTP(phoneNumber);
       toast({
         title: "OTP Sent",
@@ -97,6 +110,18 @@ export default function Login() {
     try {
       const response = await apiService.validateOTP(phoneNumber, otp);
       const userData = response.records[0];
+      
+      // Double-check user type (safety check)
+      if (userData.user_type === 'QPStaff') {
+        toast({
+          title: "Access Denied",
+          description: "QPStaff users are not allowed to login.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       saveUserData(userData);
       toast({
         title: "Login Successful",
@@ -133,6 +158,17 @@ export default function Login() {
     }
   };
   const navigateToUserDashboard = (userData: any) => {
+    // Block QPStaff users from navigation
+    if (userData.user_type === 'QPStaff') {
+      toast({
+        title: "Access Denied",
+        description: "QPStaff users are not allowed to login.",
+        variant: "destructive"
+      });
+      navigate('/login');
+      return;
+    }
+
     switch (userData.user_type) {
       case 'SiteAdmin':
         navigate('/admin-dashboard');

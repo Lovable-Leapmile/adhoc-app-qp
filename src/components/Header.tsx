@@ -28,7 +28,7 @@ export function Header({
   const user = getUserData();
   const roleText = useMemo(() => {
     const userType = user?.user_type;
-    if (!userType) return "";
+    if (!userType || userType === 'QPStaff') return "";
     if (userType === 'Customer') return 'User';
     if (userType === 'SiteSecurity') return 'Site Security';
     if (userType === 'SiteAdmin') return 'Admin';
