@@ -136,7 +136,7 @@ export default function UserDashboard() {
       }
       const authToken = localStorage.getItem('auth_token');
       const authorization = authToken ? `Bearer ${authToken}` : 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhY2wiOiJhZG1pbiIsImV4cCI6MTkxMTYyMDE1OX0.RMEW55tHQ95GVap8ChrGdPRbuVxef4Shf0NRddNgGJo';
-      const response = await fetch(`https://stagingv3.leapmile.com/podcore/adhoc/reservations/?location_id=${locationId}&user_phone=${user.user_phone}`, {
+      const response = await fetch(`http://productionv36.qikpod.com:8989/adhoc/reservations/?location_id=${locationId}&user_phone=${user.user_phone}`, {
         method: 'GET',
         headers: {
           'accept': 'application/json',

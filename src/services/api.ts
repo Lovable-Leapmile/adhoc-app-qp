@@ -1,5 +1,5 @@
-const API_BASE_URL = 'https://stagingv3.leapmile.com/podcore';
-const PAYMENT_BASE_URL = 'https://stagingv3.leapmile.com/payments';
+const API_BASE_URL = 'http://productionv36.qikpod.com:8989/';
+const PAYMENT_BASE_URL = 'http://productionv36.qikpod.com:8989/payments';
 const AUTH_TOKEN = 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhY2wiOiJhZG1pbiIsImV4cCI6MTkxMTYyMDE1OX0.RMEW55tHQ95GVap8ChrGdPRbuVxef4Shf0NRddNgGJo';
 
 export interface OTPResponse {
@@ -116,7 +116,7 @@ export const apiService = {
   },
 
   async generateOTP(userPhone: string): Promise<OTPResponse> {
-    const response = await fetch(`${API_BASE_URL}/otp/generate_otp/?user_phone=${userPhone}`, {
+    const response = await fetch(`${API_BASE_URL}otp/generate_otp/?user_phone=${userPhone}`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
@@ -132,7 +132,7 @@ export const apiService = {
   },
 
   async validateOTP(userPhone: string, otpCode: string): Promise<ValidateOTPResponse> {
-    const response = await fetch(`${API_BASE_URL}/otp/validate_otp/?user_phone=${userPhone}&otp_text=${otpCode}`, {
+    const response = await fetch(`${API_BASE_URL}otp/validate_otp/?user_phone=${userPhone}&otp_text=${otpCode}`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
@@ -176,7 +176,7 @@ export const apiService = {
   async getPodInfo(podName: string): Promise<PodInfo> {
     try {
       const response = await fetch(
-        `https://stagingv3.leapmile.com/podcore/pods/?pod_name=${podName}`,
+        `http://productionv36.qikpod.com:8989/pods/?pod_name=${podName}`,
         {
           method: 'GET',
           headers: {
@@ -218,7 +218,7 @@ export const apiService = {
       const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
 
       const response = await fetch(
-        `https://stagingv3.leapmile.com/podcore/locations/?record_id=${locationId}`,
+        `http://productionv36.qikpod.com:8989/locations/?record_id=${locationId}`,
         {
           method: 'GET',
           headers: {
@@ -281,7 +281,7 @@ export const apiService = {
   async getReservations(phoneNum: string, locationId: string, status: string): Promise<Reservation[]> {
     try {
       const response = await fetch(
-        `https://stagingv3.leapmile.com/podcore/reservations/?reservation_status=${status}&createdby_phone=${phoneNum}`,
+        `http://productionv36.qikpod.com:8989/reservations/?reservation_status=${status}&createdby_phone=${phoneNum}`,
         {
           method: 'GET',
           headers: {
