@@ -116,7 +116,7 @@ export const apiService = {
   },
 
   async generateOTP(userPhone: string): Promise<OTPResponse> {
-    const response = await fetch(`${API_BASE_URL}otp/generate_otp/?user_phone=${userPhone}`, {
+    const response = await fetch(`${API_BASE_URL}/otp/generate_otp/?user_phone=${userPhone}`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
@@ -132,7 +132,7 @@ export const apiService = {
   },
 
   async validateOTP(userPhone: string, otpCode: string): Promise<ValidateOTPResponse> {
-    const response = await fetch(`${API_BASE_URL}otp/validate_otp/?user_phone=${userPhone}&otp_text=${otpCode}`, {
+    const response = await fetch(`${API_BASE_URL}/otp/validate_otp/?user_phone=${userPhone}&otp_text=${otpCode}`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',

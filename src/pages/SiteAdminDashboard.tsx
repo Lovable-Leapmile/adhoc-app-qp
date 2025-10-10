@@ -157,7 +157,7 @@ export default function SiteAdminDashboard() {
   const loadPods = async () => {
     try {
       const authToken = localStorage.getItem('auth_token');
-      const response = await fetch(`https://productionv36.qikpod.com/podcorepods/?location_id=${currentLocationId}&pod_mode=adhoc`, {
+      const response = await fetch(`https://productionv36.qikpod.com/podcore/pods/?location_id=${currentLocationId}&pod_mode=adhoc`, {
         method: 'GET',
         headers: {
           'accept': 'application/json',
@@ -181,7 +181,7 @@ export default function SiteAdminDashboard() {
   const loadLocationUsers = async () => {
     try {
       const authToken = localStorage.getItem('auth_token');
-      const response = await fetch(`https://productionv36.qikpod.com/podcoreusers/locations/?location_id=${currentLocationId}`, {
+      const response = await fetch(`https://productionv36.qikpod.com/podcore/users/locations/?location_id=${currentLocationId}`, {
         method: 'GET',
         headers: {
           'accept': 'application/json',
@@ -207,7 +207,7 @@ export default function SiteAdminDashboard() {
   const loadHistory = async () => {
     try {
       const authToken = localStorage.getItem('auth_token');
-      const response = await fetch(`https://productionv36.qikpod.com/podcoreadhoc/reservations/?location_id=${currentLocationId}`, {
+      const response = await fetch(`https://productionv36.qikpod.com/podcore/adhoc/reservations/?location_id=${currentLocationId}`, {
         method: 'GET',
         headers: {
           'accept': 'application/json',
