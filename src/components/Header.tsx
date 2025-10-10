@@ -28,10 +28,12 @@ export function Header({
   const user = getUserData();
   const roleText = useMemo(() => {
     const userType = user?.user_type;
-    if (!userType || userType === 'QPStaff') return "";
+    if (!userType) return "";
+    // Map QPStaff to SiteAdmin
+    if (userType === 'QPStaff') return 'Site Admin';
     if (userType === 'Customer') return 'User';
     if (userType === 'SiteSecurity') return 'Site Security';
-    if (userType === 'SiteAdmin') return 'Admin';
+    if (userType === 'SiteAdmin') return 'Site Admin';
     return userType;
   }, [user]);
   const handleLogout = () => {
