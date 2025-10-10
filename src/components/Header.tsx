@@ -256,7 +256,7 @@ export function Header({
                     return;
                   }
 
-                  const response = await fetch(`http://productionv36.qikpod.com:8989/adhoc/generate_user_code/?user_phone=${userPhone}&change_code=False&new_passcode=${passcodeData.newPasscode}`, {
+                  const response = await fetch(`https://productionv36.qikpod.com/podcoreadhoc/generate_user_code/?user_phone=${userPhone}&change_code=False&new_passcode=${passcodeData.newPasscode}`, {
                     method: 'POST',
                     headers: {
                       'accept': 'application/json',

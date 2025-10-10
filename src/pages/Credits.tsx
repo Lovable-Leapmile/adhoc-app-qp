@@ -55,7 +55,7 @@ export default function Credits() {
     try {
       const authToken = localStorage.getItem('auth_token');
       const response = await fetch(
-        `http://productionv36.qikpod.com:8989/payments/payments/?user_id=${userData.id}`,
+        `https://productionv36.qikpod.com/payments/?user_id=${userData.id}`,
         {
           headers: {
             'accept': 'application/json',
@@ -175,7 +175,7 @@ export default function Credits() {
       try {
         const authToken = localStorage.getItem('auth_token');
         const response = await fetch(
-          `http://productionv36.qikpod.com:8989/payments/payments/?record_id=${paymentId}`,
+          `https://productionv36.qikpod.com/payments/?record_id=${paymentId}`,
           {
             headers: {
               'accept': 'application/json',
@@ -242,7 +242,7 @@ export default function Credits() {
         payment_vendor: selectedPaymentMethod
       });
 
-      const url = `http://productionv36.qikpod.com:8989/payments/payments/create_payment/?${params.toString()}`;
+      const url = `https://productionv36.qikpod.com/payments/create_payment/?${params.toString()}`;
 
       console.log('Creating payment with URL:', url);
 

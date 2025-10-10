@@ -1,5 +1,5 @@
-const API_BASE_URL = 'http://productionv36.qikpod.com:8989/';
-const PAYMENT_BASE_URL = 'http://productionv36.qikpod.com:8989/payments';
+const API_BASE_URL = 'https://productionv36.qikpod.com/podcore';
+const PAYMENT_BASE_URL = 'https://productionv36.qikpod.com/payments';
 const AUTH_TOKEN = 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhY2wiOiJhZG1pbiIsImV4cCI6MTkxMTYyMDE1OX0.RMEW55tHQ95GVap8ChrGdPRbuVxef4Shf0NRddNgGJo';
 
 export interface OTPResponse {
@@ -176,7 +176,7 @@ export const apiService = {
   async getPodInfo(podName: string): Promise<PodInfo> {
     try {
       const response = await fetch(
-        `http://productionv36.qikpod.com:8989/pods/?pod_name=${podName}`,
+        `https://productionv36.qikpod.com/podcorepods/?pod_name=${podName}`,
         {
           method: 'GET',
           headers: {
@@ -218,7 +218,7 @@ export const apiService = {
       const authorization = authToken ? `Bearer ${authToken}` : AUTH_TOKEN;
 
       const response = await fetch(
-        `http://productionv36.qikpod.com:8989/locations/?record_id=${locationId}`,
+        `https://productionv36.qikpod.com/podcorelocations/?record_id=${locationId}`,
         {
           method: 'GET',
           headers: {
@@ -281,7 +281,7 @@ export const apiService = {
   async getReservations(phoneNum: string, locationId: string, status: string): Promise<Reservation[]> {
     try {
       const response = await fetch(
-        `http://productionv36.qikpod.com:8989/reservations/?reservation_status=${status}&createdby_phone=${phoneNum}`,
+        `https://productionv36.qikpod.com/podcorereservations/?reservation_status=${status}&createdby_phone=${phoneNum}`,
         {
           method: 'GET',
           headers: {
